@@ -134,3 +134,13 @@ target_link_libraries(
                        libswresample
                        libswscale
                        ${log-lib})
+
+add_library( # Sets the name of the library.
+        basicdatatype
+        # Sets the library as a shared library.
+        SHARED
+        # Provides a relative path to your source file(s).
+        src/main/cpp/BasicDataType.cpp)
+target_link_libraries(
+        basicdatatype
+        ${log-lib})

@@ -7,5 +7,6 @@ class BasicFFMpegJNI {
         }
     }
 
+
     external fun getConfiguration(): String
 }

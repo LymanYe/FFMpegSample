@@ -3,10 +3,7 @@ package com.lyman.ffmpegsample
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.lyman.ffmpegsample.fragment.BaseFragment
-import com.lyman.ffmpegsample.fragment.BasicDataTypeFragment
-import com.lyman.ffmpegsample.fragment.BasicFFMpegFragment
-import com.lyman.ffmpegsample.fragment.MainFragment
+import com.lyman.ffmpegsample.fragment.*
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         var fragment: Fragment? = null
         when(type){
             BaseFragment.DATA_TYPE.BASIC_DATA -> fragment = BasicDataTypeFragment()
+            BaseFragment.DATA_TYPE.BASIC_DATA_RGB -> fragment = BasicDataTypeRGBFragment()
             BaseFragment.DATA_TYPE.BASIC_FFMPEG -> fragment = BasicFFMpegFragment()
         }
         if(fragment != null)

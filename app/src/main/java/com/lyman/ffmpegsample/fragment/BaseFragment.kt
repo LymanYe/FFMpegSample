@@ -17,6 +17,8 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
     enum class DATA_TYPE(val text: String){
         BASIC_DATA("基础数据格式"),
         BASIC_DATA_RGB("RGB格式"),
+        BASIC_DATA_RGB_SPLIT("RGB24分离R、G、B分量"),
+        BASIC_DATA_RGB_TO_BMP("RGB24封装为BMP"),
         BASIC_DATA_YUV("YUV格式"),
         BASIC_DATA_PCM("PCM格式"),
         BASIC_DATA_H264("H264视频编码格式"),
@@ -59,13 +61,12 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
 
     override fun onItemClick(view: View, position: Int) {
         var type = mRecyclerAdapter.getItem(position)
-        var mainActivity: MainActivity = activity as MainActivity
         when(type){
             DATA_TYPE.BASIC_DATA -> {
-                mainActivity.showFragment(DATA_TYPE.BASIC_DATA)
+                showFragment(DATA_TYPE.BASIC_DATA)
             }
             DATA_TYPE.BASIC_FFMPEG -> {
-                mainActivity.showFragment(DATA_TYPE.BASIC_FFMPEG)
+                showFragment(DATA_TYPE.BASIC_FFMPEG)
             }
             DATA_TYPE.ENCODE -> {}
             DATA_TYPE.DECODER -> {}
@@ -75,5 +76,10 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
 
     fun showToast(text: String) {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+    }
+
+    fun showFragment(dataType: DATA_TYPE) {
+        var mainActivity: MainActivity = activity as MainActivity
+        mainActivity.showFragment(dataType)
     }
 }

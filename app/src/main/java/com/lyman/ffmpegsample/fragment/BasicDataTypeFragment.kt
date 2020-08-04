@@ -20,8 +20,14 @@ class BasicDataTypeFragment: BaseFragment() {
         return view
     }
 
-    override fun onDestroy() {
-        Log.d("onDestroy", "onDestroy")
-        super.onDestroy()
+
+    override fun onItemClick(view: View, position: Int) {
+        var type = mRecyclerAdapter.getItem(position)
+        when(type){
+            DATA_TYPE.BASIC_DATA_RGB -> {
+                showFragment(DATA_TYPE.BASIC_DATA_RGB)
+            }
+            else -> super.onItemClick(view, position)
+        }
     }
 }
