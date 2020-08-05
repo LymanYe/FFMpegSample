@@ -10,10 +10,10 @@ import com.lyman.ffmpegsample.controller.BasicDataTypeJNI
 import java.io.File
 
 
-class BasicDataTypeRGBFragment: BaseFragment() {
-    // storage/emulated/0/Android/data/com.lyman.ffmpegsample/files/Pictures/BasicDataType/RGB
-    private val SPLIT_RGB_ROOT_PATH by lazy {
-        activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType" + File.separator + "RGB"
+class BasicDataTypeFormatConversionFragment: BaseFragment() {
+    // storage/emulated/0/Android/data/com.lyman.ffmpegsample/files/Pictures/BasicDataType/
+    private val FORMAT_CONVERSION_ROOT_PATH by lazy {
+        activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType"
     }
     private val mBasicDataTypeJNI: BasicDataTypeJNI by lazy {
         BasicDataTypeJNI()
@@ -26,7 +26,7 @@ class BasicDataTypeRGBFragment: BaseFragment() {
         savedInstanceState: Bundle?
     ): View? {
         var view: View = inflater.inflate(R.layout.fragment_basic_data_type, container, false)
-        list = listOf(DATA_TYPE.BASIC_DATA_RGB_SPLIT, DATA_TYPE.BASIC_DATA_RGB_TO_BMP)
+        list = listOf(DATA_TYPE.BASIC_DATA_FORMAT_CONVERSION_RGB_TO_YUV)
         initView(view)
         return view
     }
@@ -35,24 +35,14 @@ class BasicDataTypeRGBFragment: BaseFragment() {
     override fun onItemClick(view: View, position: Int) {
         var type = mRecyclerAdapter.getItem(position)
         when(type){
-            DATA_TYPE.BASIC_DATA_RGB_SPLIT -> {
+            DATA_TYPE.BASIC_DATA_FORMAT_CONVERSION_RGB_TO_YUV -> {
                 var bArrays: ByteArray? = readAssetsFileToByteArray("pic.rgb")
-                var rootPath = File(SPLIT_RGB_ROOT_PATH)
+                var rootPath = File(FORMAT_CONVERSION_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()
+                var saveFilePath = FORMAT_CONVERSION_ROOT_PATH + File.separator + "pic.yuv"
                 if(bArrays != null) {
-                    mBasicDataTypeJNI.splitRGB24(bArrays, 500, 500, rootPath.toString())
-                    showToast("File save to $rootPath")
-                }
-            }
-            DATA_TYPE.BASIC_DATA_RGB_TO_BMP -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("pic.rgb")
-                var rootPath = File(SPLIT_RGB_ROOT_PATH)
-                if(!rootPath.exists())
-                    rootPath.mkdirs()
-                var saveFilePath = SPLIT_RGB_ROOT_PATH + File.separator + "pic.bmp"
-                if(bArrays != null) {
-                    mBasicDataTypeJNI.convertRGB24ToBMP(bArrays, 500, 500, saveFilePath)
+                    mBasicDataTypeJNI.convertRGB24ToYUV420P(bArrays, 500, 500, saveFilePath)
                     showToast("File save to $saveFilePath")
                 }
             }

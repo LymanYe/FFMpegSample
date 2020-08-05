@@ -1,6 +1,7 @@
 package com.lyman.ffmpegsample.fragment
 
 import android.graphics.Rect
+import android.text.TextUtils
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -9,8 +10,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lyman.ffmpegsample.MainActivity
 import com.lyman.ffmpegsample.R
 import com.lyman.ffmpegsample.adapter.MyRecyclerViewAdapter
+import java.io.InputStream
 
 open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
+    var TAG: String = javaClass.simpleName
     lateinit var mRecyclerView: RecyclerView
     lateinit var mRecyclerAdapter: MyRecyclerViewAdapter
     lateinit var list : List<DATA_TYPE>
@@ -20,12 +23,16 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         BASIC_DATA_RGB_SPLIT("RGB24分离R、G、B分量"),
         BASIC_DATA_RGB_TO_BMP("RGB24封装为BMP"),
         BASIC_DATA_YUV("YUV格式"),
+        BASIC_DATA_YUV_SPLIT("YUV420P分离Y、U、V分量"),
+        BASIC_DATA_YUV_GRAY("YUV420P变为灰度图"),
         BASIC_DATA_PCM("PCM格式"),
         BASIC_DATA_H264("H264视频编码格式"),
         BASIC_DATA_H265("H265视频编码格式"),
         BASIC_DATA_AAC("AAC音频编码格式"),
         BASIC_DATA_FLV("FLV封装格式"),
         BASIC_DATA_MP4("MP4封装格式"),
+        BASIC_DATA_FORMAT_CONVERSION("格式转换"),
+        BASIC_DATA_FORMAT_CONVERSION_RGB_TO_YUV("RGB24 转换为YUV420P"),
         BASIC_FFMPEG("FFMpeg基础"),
         BASIC_FFMPEG_INTEGRATED("FFMpeg集成"),
         ENCODE("编码"),
@@ -74,9 +81,25 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         Toast.makeText(context, "clicked" + type.text , Toast.LENGTH_SHORT).show()
     }
 
+
+    fun readAssetsFileToByteArray(fileName: String): ByteArray? {
+        if (TextUtils.isEmpty(fileName))
+            return null
+
+        try {
+            var inputStream: InputStream? = activity?.assets?.open(fileName)
+            return inputStream?.readBytes()
+        } catch (error: Throwable) {
+            error.printStackTrace()
+        }
+        return null
+    }
+
+
     fun showToast(text: String) {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
     }
+
 
     fun showFragment(dataType: DATA_TYPE) {
         var mainActivity: MainActivity = activity as MainActivity
