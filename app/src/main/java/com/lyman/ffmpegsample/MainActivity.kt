@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
             BaseFragment.DATA_TYPE.BASIC_DATA -> fragment = BasicDataTypeFragment()
             BaseFragment.DATA_TYPE.BASIC_DATA_RGB -> fragment = BasicDataTypeRGBFragment()
             BaseFragment.DATA_TYPE.BASIC_DATA_YUV -> fragment = BasicDataTypeYUVFragment()
+            BaseFragment.DATA_TYPE.BASIC_DATA_PCM -> fragment = BasicDataTypePCMFragment()
             BaseFragment.DATA_TYPE.BASIC_DATA_FORMAT_CONVERSION -> fragment = BasicDataTypeFormatConversionFragment()
             BaseFragment.DATA_TYPE.BASIC_FFMPEG -> fragment = BasicFFMpegFragment()
         }

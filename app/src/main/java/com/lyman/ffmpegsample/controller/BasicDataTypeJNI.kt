@@ -21,4 +21,13 @@ class BasicDataTypeJNI {
 
 
     external fun splitYUV420P(byteArray: ByteArray, width: Int, height: Int, saveRootPath: String)
+
+
+    external fun splitPCM16LE(byteArray: ByteArray, saveRootPath: String)
+
+
+    external fun halfPCMLeftVolume(byteArray: ByteArray, saveRootPath: String)
+
+
+    external fun convertPCM16LEToWAVE(byteArray: ByteArray, saveRootPath: String)
 }

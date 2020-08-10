@@ -116,6 +116,150 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_s
 }
 
 
+// PCM格式简介参考：https://www.cnblogs.com/CoderTian/p/6657844.html
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_splitPCM16LE
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring path) {
+    char *nativePath = const_cast<char *>(env->GetStringUTFChars(path, JNI_FALSE));
+    // 生成图片storage/emulated/0/Android/data/com.lyman.ffmpegsample/files/Pictures/BasicDataType/PCM/left.pcm
+    // 使用工具Audacity查看提取出来的左右声道音频数据
+    char *leftPCMPathStr = (char *) malloc(strlen(nativePath) + strlen("/left.pcm"));
+    sprintf(leftPCMPathStr, "%s%s", nativePath, "/left.pcm");
+    LOGD(TAG, "splitPCM16LE, left pcm path: %s", leftPCMPathStr);
+    char *rightPCMPathStr = (char *) malloc(strlen(nativePath) + strlen("/right.pcm"));
+    sprintf(rightPCMPathStr, "%s%s", nativePath, "/right.pcm");
+    LOGD(TAG, "splitPCM16LE, right pcm path: %s", rightPCMPathStr);
+
+    FILE *leftPCMFile = fopen(leftPCMPathStr, "wb");
+    if(leftPCMFile == NULL) {
+        LOGE(TAG, "splitPCM16LE, left pcm file create failed path is: %s", leftPCMPathStr);
+        return;
+    }
+    FILE *rightPCMFile = fopen(rightPCMPathStr, "wb");
+    if(rightPCMFile == NULL) {
+        LOGE(TAG, "splitPCM16LE, right pcm file create failed path is：%s", rightPCMPathStr);
+        return;
+    }
+
+    jbyte *databyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *pcm = (unsigned char *)databyte;
+    int dataLength = env->GetArrayLength(byteArray);
+
+    // 因为PCM音频数据是按照LRLRLR的方式来存储左右声道的音频数据的，所以我们可以通过将它们交叉的读出来的方式来分离左右声道的数据
+    for(int index = 0; index < dataLength; index += 4) {
+        fwrite(pcm + index, 1, 2, leftPCMFile);
+        fwrite(pcm + index + 2, 1, 2, rightPCMFile);
+    }
+
+    free(leftPCMPathStr);
+    free(rightPCMPathStr);
+    fclose(leftPCMFile);
+    fclose(rightPCMFile);
+    env->ReleaseByteArrayElements(byteArray, databyte, 0);
+    pcm = NULL;
+    env->ReleaseStringUTFChars(path, nativePath);
+}
+
+
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_halfPCMLeftVolume
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring path) {
+    char *nativePath = const_cast<char *>(env->GetStringUTFChars(path, JNI_FALSE));
+    // 生成图片storage/emulated/0/Android/data/com.lyman.ffmpegsample/files/Pictures/BasicDataType/PCM/half_left.pcm
+    // 使用工具Audacity查看提取出来的左右声道音频数据
+    char *leftPCMPathStr = (char *) malloc(strlen(nativePath) + strlen("/half_left.pcm"));
+    sprintf(leftPCMPathStr, "%s%s", nativePath, "/half_left.pcm");
+    LOGD(TAG, "splitPCM16LE, left pcm path: %s", leftPCMPathStr);
+    char *rightPCMPathStr = (char *) malloc(strlen(nativePath) + strlen("/right.pcm"));
+    sprintf(rightPCMPathStr, "%s%s", nativePath, "/right.pcm");
+    LOGD(TAG, "splitPCM16LE, right pcm path: %s", rightPCMPathStr);
+
+    FILE *leftPCMFile = fopen(leftPCMPathStr, "wb");
+    if(leftPCMFile == NULL) {
+        LOGE(TAG, "splitPCM16LE, left pcm file create failed path is: %s", leftPCMPathStr);
+        return;
+    }
+    FILE *rightPCMFile = fopen(rightPCMPathStr, "wb");
+    if(rightPCMFile == NULL) {
+        LOGE(TAG, "splitPCM16LE, right pcm file create failed path is：%s", rightPCMPathStr);
+        return;
+    }
+
+    jbyte *databyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *pcm = (unsigned char *)databyte;
+    int dataLength = env->GetArrayLength(byteArray);
+
+    // 因为对于PCM音频数据而言，它的幅值（即该采样点采样值的大小）代表音量的大小，所以我们可以通过减小某个声道的数据的值来实现降低某个声道的音量
+    for(int index = 0; index < dataLength; index += 4) {
+        short *leftData = reinterpret_cast<short *>(pcm + index);
+        *leftData = *leftData / 2;
+        fwrite(pcm + index, 1, 2, leftPCMFile);
+        fwrite(pcm + index + 2, 1, 2, rightPCMFile);
+    }
+
+    free(leftPCMPathStr);
+    free(rightPCMPathStr);
+    fclose(leftPCMFile);
+    fclose(rightPCMFile);
+    env->ReleaseByteArrayElements(byteArray, databyte, 0);
+    pcm = NULL;
+    env->ReleaseStringUTFChars(path, nativePath);
+}
+
+
+// WAV格式简介：http://soundfile.sapp.org/doc/WaveFormat/
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_convertPCM16LEToWAVE
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring path) {
+    int channels = 2, sample_rate = 44100, bits = 16;
+    WAVE_HEADER   pcmHEADER;
+    WAVE_FMT   pcmFMT;
+    WAVE_DATA   pcmDATA;
+
+    char *nativeSavePath = const_cast<char *>(env->GetStringUTFChars(path, JNI_FALSE));
+    jbyte *databyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *pcm = (unsigned char *)databyte;
+    int dataLength = env->GetArrayLength(byteArray);
+    FILE *nativeSaveFile = fopen(nativeSavePath, "wb");
+    if(nativeSaveFile == NULL) {
+        LOGE(TAG, "convertPCM16LEToWAVE, save wav file create failed path is: %s", nativeSavePath);
+        return;
+    }
+
+    //WAVE_HEADER
+    memcpy(pcmHEADER.fccID,"RIFF",strlen("RIFF"));
+    memcpy(pcmHEADER.fccType,"WAVE",strlen("WAVE"));
+    fseek(nativeSaveFile, sizeof(WAVE_HEADER), SEEK_CUR);
+    //WAVE_FMT
+    memcpy(pcmFMT.fccID,"fmt ",strlen("fmt "));
+    pcmFMT.dwSamplesPerSec = sample_rate;
+    pcmFMT.dwAvgBytesPerSec = pcmFMT.dwSamplesPerSec * sizeof(pcm) * 2;
+    pcmFMT.uiBitsPerSample = bits;
+    pcmFMT.dwSize = 16;
+    pcmFMT.wBlockAlign = 2;
+    pcmFMT.wChannels = channels;
+    pcmFMT.wFormatTag = 1;
+
+    fwrite(&pcmFMT, sizeof(WAVE_FMT), 1, nativeSaveFile);
+    //WAVE_DATA;
+    memcpy(pcmDATA.fccID, "data", strlen("data"));
+    pcmDATA.dwSize = 0;
+    fseek(nativeSaveFile, sizeof(WAVE_DATA), SEEK_CUR);
+    for(int index = 0; index < dataLength; index += 2) {
+        pcmDATA.dwSize += 2;
+        fwrite(pcm + index, sizeof(unsigned short), 1, nativeSaveFile);
+    }
+
+    pcmHEADER.dwSize = 44 + pcmDATA.dwSize;
+    rewind(nativeSaveFile);
+    fwrite(&pcmHEADER, sizeof(WAVE_HEADER), 1, nativeSaveFile);
+    fseek(nativeSaveFile,sizeof(WAVE_FMT),SEEK_CUR);
+    fwrite(&pcmDATA, sizeof(WAVE_DATA), 1, nativeSaveFile);
+
+    fclose(nativeSaveFile);
+    env->ReleaseByteArrayElements(byteArray, databyte, 0);
+    pcm = NULL;
+    env->ReleaseStringUTFChars(path, nativeSavePath);
+}
+
+
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_convertRGB24ToBMP
         (JNIEnv *env, jobject js, jbyteArray byteArray, jint width, jint height, jstring path) {
     int i = 0, j = 0;

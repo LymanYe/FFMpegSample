@@ -30,6 +30,9 @@ class BasicDataTypeFragment: BaseFragment() {
             DATA_TYPE.BASIC_DATA_YUV -> {
                 showFragment(DATA_TYPE.BASIC_DATA_YUV)
             }
+            DATA_TYPE.BASIC_DATA_PCM -> {
+                showFragment(DATA_TYPE.BASIC_DATA_PCM)
+            }
             DATA_TYPE.BASIC_DATA_FORMAT_CONVERSION -> {
                 showFragment(DATA_TYPE.BASIC_DATA_FORMAT_CONVERSION)
             }
