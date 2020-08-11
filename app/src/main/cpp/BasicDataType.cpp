@@ -377,6 +377,193 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_s
     env->ReleaseByteArrayElements(byteArray, yuv_jbyte, 0);
 }
 
+
+// H264格式简介参考：https://zhuanlan.zhihu.com/p/71928833
+int FindStartCode2 (unsigned char *Buf){
+    if(Buf[0]!=0 || Buf[1]!=0 || Buf[2] !=1) return 0; //0x000001?
+    else return 1;
+}
+
+int FindStartCode3 (unsigned char *Buf){
+    if(Buf[0]!=0 || Buf[1]!=0 || Buf[2] !=0 || Buf[3] !=1) return 0;//0x00000001?
+    else return 1;
+}
+
+FILE *h264bitstream;
+int GetAnnexbNALU (NALU_t *nalu){
+    int pos = 0;
+    int StartCodeFound, rewind;
+    unsigned char *Buf;
+
+    if ((Buf = (unsigned char*)calloc (nalu->max_size , sizeof(char))) == NULL)
+        LOGD(TAG, "GetAnnexbNALU, Could not allocate Buf memory\n");
+
+    nalu->startcodeprefix_len=3;
+
+    if(3 != fread(Buf, 1, 3, h264bitstream)){
+        free(Buf);
+        return 0;
+    }
+    int info2 = 0, info3 = 0;
+    info2 = FindStartCode2 (Buf);
+    if(info2 != 1) {
+        if(1 != fread(Buf+3, 1, 1, h264bitstream)){
+            free(Buf);
+            return 0;
+        }
+        info3 = FindStartCode3(Buf);
+        if (info3 != 1){
+            free(Buf);
+            return -1;
+        }
+        else {
+            pos = 4;
+            nalu->startcodeprefix_len = 4;
+        }
+    }
+    else{
+        nalu->startcodeprefix_len = 3;
+        pos = 3;
+    }
+    StartCodeFound = 0;
+    info2 = 0;
+    info3 = 0;
+
+    while (!StartCodeFound){
+        if (feof(h264bitstream)){
+            nalu->len = (pos - 1)-nalu->startcodeprefix_len;
+            memcpy (nalu->buf, &Buf[nalu->startcodeprefix_len], nalu->len);
+            nalu->forbidden_bit = nalu->buf[0] & 0x80; //1 bit
+            nalu->nal_reference_idc = nalu->buf[0] & 0x60; // 2 bit
+            nalu->nal_unit_type = (nalu->buf[0]) & 0x1f;// 5 bit
+            free(Buf);
+            return pos - 1;
+        }
+        Buf[pos++] = fgetc(h264bitstream);
+        info3 = FindStartCode3(&Buf[pos - 4]);
+        if(info3 != 1)
+            info2 = FindStartCode2(&Buf[pos - 3]);
+        StartCodeFound = (info2 == 1 || info3 == 1);
+    }
+
+    // Here, we have found another start code (and read length of startcode bytes more than we should
+    // have.  Hence, go back in the file
+    rewind = (info3 == 1)? -4 : -3;
+
+    if (0 != fseek(h264bitstream, rewind, SEEK_CUR)){
+        free(Buf);
+        LOGE(TAG, "GetAnnexbNALU, Cannot fseek in the bit stream file");
+    }
+
+    // Here the Start code, the complete NALU, and the next start code is in the Buf.
+    // The size of Buf is pos, pos+rewind are the number of bytes excluding the next
+    // start code, and (pos+rewind)-startcodeprefix_len is the size of the NALU excluding the start code
+    nalu->len = (pos + rewind) - nalu->startcodeprefix_len;
+    memcpy(nalu->buf, &Buf[nalu->startcodeprefix_len], nalu->len);//
+    nalu->forbidden_bit = nalu->buf[0] & 0x80; //1 bit
+    nalu->nal_reference_idc = nalu->buf[0] & 0x60; // 2 bit
+    nalu->nal_unit_type = (nalu->buf[0]) & 0x1f;// 5 bit
+    free(Buf);
+
+    return (pos + rewind);
+}
+
+
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_analysisH264Format
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath) {
+    jbyte *h264_jbyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *h264_buffer = (unsigned char *)h264_jbyte;
+    int byteLength = env->GetArrayLength(byteArray);
+    char *outputPath = const_cast<char *>(env->GetStringUTFChars(rootOutputPath, JNI_FALSE));
+
+    // save file
+    FILE *outputH264File;
+    char outputH264FilePath[120] = {0};
+    sprintf(outputH264FilePath, "%s%s", outputPath, "/output.h264");
+    if((outputH264File = fopen(outputH264FilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisH264Format, failed to create output h264 file path");
+        return;
+    }
+    fwrite(h264_buffer, 1, byteLength, outputH264File);
+    // save analysis result
+    FILE *outputH264AnalysisFile;
+    char outputH264AnalysisFilePath[120] = {0};
+    sprintf(outputH264AnalysisFilePath, "%s%s", outputPath, "/output.txt");
+    if((outputH264AnalysisFile = fopen(outputH264AnalysisFilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisH264Format, failed to create output analysis file path");
+        return;
+    }
+    LOGD(TAG, "analysisH264Format, output analysis file path: %s", outputH264AnalysisFilePath);
+    LOGD(TAG, "analysisH264Format, output h264 file path: %s", outputH264FilePath);
+    h264bitstream = fopen(outputH264FilePath, "rb+");
+
+    int buffersize = 100000;
+    NALU_t *naluT = (NALU_t*)calloc (1, sizeof (NALU_t));
+    if (naluT == NULL){
+        LOGE(TAG, "analysisH264Format, alloc NALU error");
+        return;
+    }
+
+    naluT -> max_size = buffersize;
+    naluT -> buf = (char*)calloc (buffersize, sizeof (char));
+    if (naluT -> buf == NULL){
+        free (naluT);
+        LOGE (TAG, "analysisH264Format, alloc NALU error: n->buf");
+        return;
+    }
+
+    int data_offset = 0;
+    int nal_num= 0;
+    fprintf(outputH264AnalysisFile, "%s", "-----+--------- NALU Table ------+---------+\n");
+    fprintf(outputH264AnalysisFile, "%s", " NUM |    POS  |    IDC |  TYPE  |   LEN   |\n");
+    fprintf(outputH264AnalysisFile, "%s", "-----+---------+--------+--------+---------+\n");
+
+    while(!feof(h264bitstream))
+    {
+        int data_lenth;
+        data_lenth = GetAnnexbNALU(naluT);
+        char type_str[20] = {0};
+        switch(naluT -> nal_unit_type){
+            case NALU_TYPE_SLICE:sprintf(type_str, "%s", "SLICE");break;
+            case NALU_TYPE_DPA:sprintf(type_str, "%s", "DPA");break;
+            case NALU_TYPE_DPB:sprintf(type_str, "%s", "DPB");break;
+            case NALU_TYPE_DPC:sprintf(type_str, "%s", "DPC");break;
+            case NALU_TYPE_IDR:sprintf(type_str, "%s", "IDR");break;
+            case NALU_TYPE_SEI:sprintf(type_str, "%s", "SEI");break;
+            case NALU_TYPE_SPS:sprintf(type_str, "%s", "SPS");break;
+            case NALU_TYPE_PPS:sprintf(type_str, "%s", "PPS");break;
+            case NALU_TYPE_AUD:sprintf(type_str, "%s", "AUD");break;
+            case NALU_TYPE_EOSEQ:sprintf(type_str, "%s", "EOSEQ");break;
+            case NALU_TYPE_EOSTREAM:sprintf(type_str, "%s", "EOSTREAM");break;
+            case NALU_TYPE_FILL:sprintf(type_str, "%s", "FILL");break;
+        }
+        char idc_str[20] = {0};
+        switch(naluT -> nal_reference_idc>>5){
+            case NALU_PRIORITY_DISPOSABLE:sprintf(idc_str, "%s", "DISPOS");break;
+            case NALU_PRIRITY_LOW:sprintf(idc_str, "%s", "LOW");break;
+            case NALU_PRIORITY_HIGH:sprintf(idc_str, "%s", "HIGH");break;
+            case NALU_PRIORITY_HIGHEST:sprintf(idc_str, "%s", "HIGHEST");break;
+        }
+        fprintf(outputH264AnalysisFile, "%5d| %8d| %7s| %7s| %8d|\n", nal_num, data_offset, idc_str, type_str, naluT->len);
+        data_offset = data_offset + data_lenth;
+        nal_num++;
+    }
+
+    //Free
+    if (naluT)
+        if (naluT -> buf){
+            free(naluT -> buf);
+            naluT -> buf = NULL;
+        }
+    free(naluT);
+    fclose(h264bitstream);
+    fclose(outputH264AnalysisFile);
+    fclose(outputH264File);
+    env -> ReleaseStringUTFChars(rootOutputPath, outputPath);
+    env->ReleaseByteArrayElements(byteArray, h264_jbyte, 0);
+}
+
+
 #ifdef __cplusplus
 }
 #endif
