@@ -31,5 +31,12 @@ class BasicDataTypeJNI {
 
     external fun convertPCM16LEToWAVE(byteArray: ByteArray, saveRootPath: String)
 
-    external fun analysisH264Format(byteArray: ByteArray, formatOutputPath: String)
+
+    external fun analysisH264Format(byteArray: ByteArray, saveRootPath: String)
+
+
+    external fun analysisH265Format(byteArray: ByteArray, saveRootPath: String)
+
+
+    external fun analysisAACFormat(byteArray: ByteArray, saveRootPath: String)
 }

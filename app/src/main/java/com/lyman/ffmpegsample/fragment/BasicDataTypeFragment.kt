@@ -15,6 +15,12 @@ class BasicDataTypeFragment: BaseFragment() {
     private val H264_ROOT_PATH by lazy {
         activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType" + File.separator + "H264"
     }
+    private val H265_ROOT_PATH by lazy {
+        activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType" + File.separator + "H265"
+    }
+    private val AAC_ROOT_PATH by lazy {
+        activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType" + File.separator + "AAC"
+    }
     private val mBasicDataTypeJNI: BasicDataTypeJNI by lazy {
         BasicDataTypeJNI()
     }
@@ -52,11 +58,33 @@ class BasicDataTypeFragment: BaseFragment() {
                 if(!rootPath.exists())
                     rootPath.mkdirs()
                 if(bArrays != null) {
-                    Log.d(TAG, "analysisH264Format, start")
                     Thread( Runnable {
                         mBasicDataTypeJNI.analysisH264Format(bArrays, H264_ROOT_PATH)
                     }).start()
-                    Log.d(TAG, "analysisH264Format, end")
+                    showToast("File save to $rootPath")
+                }
+            }
+            DATA_TYPE.BASIC_DATA_H265 -> {
+                var bArrays: ByteArray? = readAssetsFileToByteArray("output.h265")
+                var rootPath = File(H265_ROOT_PATH)
+                if(!rootPath.exists())
+                    rootPath.mkdirs()
+                if(bArrays != null) {
+                    Thread( Runnable {
+                        mBasicDataTypeJNI.analysisH265Format(bArrays, H265_ROOT_PATH)
+                    }).start()
+                    showToast("File save to $rootPath")
+                }
+            }
+            DATA_TYPE.BASIC_DATA_AAC -> {
+                var bArrays: ByteArray? = readAssetsFileToByteArray("output.aac")
+                var rootPath = File(AAC_ROOT_PATH)
+                if(!rootPath.exists())
+                    rootPath.mkdirs()
+                if(bArrays != null) {
+                    Thread( Runnable {
+                        mBasicDataTypeJNI.analysisAACFormat(bArrays, AAC_ROOT_PATH)
+                    }).start()
                     showToast("File save to $rootPath")
                 }
             }

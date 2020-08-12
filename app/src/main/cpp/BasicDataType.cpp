@@ -432,7 +432,7 @@ int GetAnnexbNALU (NALU_t *nalu){
     while (!StartCodeFound){
         if (feof(h264bitstream)){
             nalu->len = (pos - 1)-nalu->startcodeprefix_len;
-            memcpy (nalu->buf, &Buf[nalu->startcodeprefix_len], nalu->len);
+            memcpy(nalu->buf, &Buf[nalu->startcodeprefix_len], nalu->len);
             nalu->forbidden_bit = nalu->buf[0] & 0x80; //1 bit
             nalu->nal_reference_idc = nalu->buf[0] & 0x60; // 2 bit
             nalu->nal_unit_type = (nalu->buf[0]) & 0x1f;// 5 bit
@@ -564,6 +564,306 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_a
 }
 
 
+int GetNaluDataLen(int startPos, int h265BitsSize, unsigned char *h265Bits)
+{
+    int parsePos = 0;
+    parsePos = startPos;
+
+    while (parsePos < h265BitsSize)
+    {
+        if (FindStartCode2(&h265Bits[parsePos]))
+        {
+            return parsePos - startPos;
+        }
+        else if (FindStartCode3(&h265Bits[parsePos]))
+        {
+            return parsePos - startPos;
+        }
+        else
+        {
+            parsePos++;
+        }
+    }
+
+    return parsePos - startPos; // if file is end
+}
+
+void ParseNaluData(const unsigned int naluLen, unsigned char* const nuluData, FILE *file)
+{
+    static int naluNum = 0;
+    unsigned char *data = NULL;
+    char typeStr[20] = {0};
+
+    T_H265_NALU_HEADER h265NaluHeader = {0};
+    data = nuluData;
+    memset(&h265NaluHeader, 0x0, sizeof(T_H265_NALU_HEADER));
+    h265NaluHeader.nal_unit_type = ((data[0]>>1) & 0x3f);
+    naluNum++;
+
+    switch (h265NaluHeader.nal_unit_type)
+    {
+        case HEVC_NAL_TRAIL_N:sprintf(typeStr, "%s", "B SLICE");break;
+        case HEVC_NAL_TRAIL_R:sprintf(typeStr, "%s", "P SLICE");break;
+        case HEVC_NAL_IDR_W_RADL:sprintf(typeStr, "%s", "IDR");break;
+        case HEVC_NAL_VPS:sprintf(typeStr, "%s", "VPS");break;
+        case HEVC_NAL_SPS:sprintf(typeStr, "%s", "SPS");break;
+        case HEVC_NAL_PPS:sprintf(typeStr, "%s", "PPS");break;
+        case HEVC_NAL_SEI_PREFIX:sprintf(typeStr, "%s", "SEI");break;
+        default:sprintf(typeStr, "%s", "NTYPE(%d)", h265NaluHeader.nal_unit_type);break;
+    }
+
+    fprintf(file, "%5d| %7s| %8d|\n", naluNum, typeStr, naluLen);
+}
+
+
+// 参考：https://www.cnblogs.com/leaffei/p/10553783.html
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_analysisH265Format
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath) {
+    jbyte *h265_jbyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *h265_buffer = (unsigned char *)h265_jbyte;
+    int byteLength = env->GetArrayLength(byteArray);
+    char *outputPath = const_cast<char *>(env->GetStringUTFChars(rootOutputPath, JNI_FALSE));
+
+    // save file
+    FILE *outputH265File;
+    char outputH265FilePath[120] = {0};
+    sprintf(outputH265FilePath, "%s%s", outputPath, "/output.h265");
+    if((outputH265File = fopen(outputH265FilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisH265Format, failed to create output h265 file path");
+        return;
+    }
+    fwrite(h265_buffer, 1, byteLength, outputH265File);
+    // save analysis result
+    FILE *outputH265AnalysisFile;
+    char outputH265AnalysisFilePath[120] = {0};
+    sprintf(outputH265AnalysisFilePath, "%s%s", outputPath, "/output.txt");
+    if((outputH265AnalysisFile = fopen(outputH265AnalysisFilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisH265Format, failed to create output analysis file path");
+        return;
+    }
+    LOGD(TAG, "analysisH265Format, output analysis file path: %s", outputH265AnalysisFilePath);
+    LOGD(TAG, "analysisH265Format, output h265 file path: %s", outputH265FilePath);
+
+    int fileLen = 0;
+    int naluLen = 0;
+    int h265BitsPos = 0; /* h265, hevc; h264, avc系列, Advanced Video Coding */
+
+    unsigned char *h265Bits = NULL;
+    unsigned char *naluData = NULL;
+
+    FILE *fp = fopen(outputH265FilePath, "rb+");;
+    fseek(fp, 0, SEEK_END);
+    fileLen = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    h265Bits = (unsigned char*)malloc(fileLen);
+    if (!h265Bits)
+    {
+        LOGE(TAG, "analysisH265Format, maybe file is too long, or memery is not enough!\n");
+        fclose(fp);
+        return;
+    }
+
+    memset(h265Bits, 0x0, fileLen);
+
+    if (fread(h265Bits, 1, fileLen, fp) < 0)
+    {
+        LOGE(TAG, "analysisH265Format, read file data to h265Bits error!\n");
+        fclose(fp);
+        free(h265Bits);
+        h265Bits = NULL;
+        return;
+    }
+    fclose(fp);
+
+    fprintf(outputH265AnalysisFile, "%s", "-----+--- NALU Table --+\n");
+    fprintf(outputH265AnalysisFile, "%s", " NUM |  TYPE |   LEN   |\n");
+    fprintf(outputH265AnalysisFile, "%s", "-----+-------+---------+\n");
+
+    while (h265BitsPos < (fileLen-4))
+    {
+        if (FindStartCode2(&h265Bits[h265BitsPos]))
+        {
+            naluLen = GetNaluDataLen(h265BitsPos+3, fileLen, h265Bits);
+            naluData = (unsigned char*)malloc(naluLen);
+            if (naluData)
+            {
+                memset(naluData, 0x0, naluLen);
+                memcpy(naluData, h265Bits+h265BitsPos+3, naluLen);
+                ParseNaluData(naluLen, naluData, outputH265AnalysisFile);
+                free(naluData);
+                naluData = NULL;
+            }
+
+            h265BitsPos += (naluLen+3);
+        }
+        else if (FindStartCode3(&h265Bits[h265BitsPos]))
+        {
+            naluLen = GetNaluDataLen(h265BitsPos+4, fileLen, h265Bits);
+
+            naluData = (unsigned char*)malloc(naluLen);
+            if (naluData)
+            {
+                memset(naluData, 0x0, naluLen);
+                memcpy(naluData, h265Bits+h265BitsPos+4, naluLen);
+                ParseNaluData(naluLen, naluData, outputH265AnalysisFile);
+                free(naluData);
+                naluData = NULL;
+            }
+            h265BitsPos += (naluLen+4);
+        }
+        else
+        {
+            h265BitsPos++;
+        }
+    }
+
+    if (naluData) {
+        free(naluData);
+        naluData = NULL;
+    }
+    if (h265Bits) {
+        free(h265Bits);
+        h265Bits = NULL;
+    }
+    fclose(fp);
+    fclose(outputH265AnalysisFile);
+    fclose(outputH265File);
+    env -> ReleaseStringUTFChars(rootOutputPath, outputPath);
+    env->ReleaseByteArrayElements(byteArray, h265_jbyte, 0);
+}
+
+
+int getADTSframe(unsigned char* buffer, int buf_size, unsigned char* data ,int* data_size){
+    int size = 0;
+    if(!buffer || !data || !data_size){
+        return -1;
+    }
+
+    while(1){
+        if(buf_size < 7)
+            return -1;
+        //Sync words
+        if((buffer[0] == 0xff) && ((buffer[1] & 0xf0) == 0xf0) ){
+            size |= ((buffer[3] & 0x03) <<11);     //high 2 bit
+            size |= buffer[4]<<3;                //middle 8 bit
+            size |= ((buffer[5] & 0xe0)>>5);        //low 3bit
+            break;
+        }
+        --buf_size;
+        ++buffer;
+    }
+
+    if(buf_size < size)
+        return 1;
+
+    memcpy(data, buffer, size);
+    *data_size = size;
+    return 0;
+}
+
+
+// AAC格式参考：https://blog.csdn.net/lq496387202/article/details/81014474
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_analysisAACFormat
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath) {
+    jbyte *aac_jbyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *aac_buffer = (unsigned char *)aac_jbyte;
+    int byteLength = env->GetArrayLength(byteArray);
+    char *outputPath = const_cast<char *>(env->GetStringUTFChars(rootOutputPath, JNI_FALSE));
+
+    // save file
+    FILE *outputAACFile;
+    char outputAACFilePath[120] = {0};
+    sprintf(outputAACFilePath, "%s%s", outputPath, "/output.aac");
+    if((outputAACFile = fopen(outputAACFilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisAACFormat, failed to create output aac file path");
+        return;
+    }
+    fwrite(aac_buffer, 1, byteLength, outputAACFile);
+    // save analysis result
+    FILE *outputAACAnalysisFile;
+    char outputAACAnalysisFilePath[120] = {0};
+    sprintf(outputAACAnalysisFilePath, "%s%s", outputPath, "/output.txt");
+    if((outputAACAnalysisFile = fopen(outputAACAnalysisFilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisAACFormat, failed to create output analysis file path");
+        return;
+    }
+    LOGD(TAG, "analysisAACFormat, output analysis file path: %s", outputAACAnalysisFilePath);
+    LOGD(TAG, "analysisAACFormat, output aac file path: %s", outputAACFilePath);
+    h264bitstream = fopen(outputAACFilePath, "rb+");
+
+    int data_size = 0;
+    int size = 0;
+    int cnt = 0;
+    int offset = 0;
+    unsigned char *aacframe=(unsigned char *)malloc(1024*5);
+    unsigned char *aacbuffer=(unsigned char *)malloc(1024*1024);
+
+    FILE *aacFile = fopen(outputAACFilePath, "rb");
+    if(!aacFile){
+        LOGE(TAG, "analysisAACFormat, Open file error");
+        return;
+    }
+
+    fprintf(outputAACAnalysisFile,"%s", "-----+- ADTS Frame Table -+------+\n");
+    fprintf(outputAACAnalysisFile,"%s", " NUM | Profile | Frequency| Size |\n");
+    fprintf(outputAACAnalysisFile,"%s", "-----+---------+----------+------+\n");
+
+    while(!feof(aacFile)){
+        data_size = fread(aacbuffer + offset, 1, 1024*1024 - offset, aacFile);
+        unsigned char* input_data = aacbuffer;
+        while(1)
+        {
+            int ret = getADTSframe(input_data, data_size, aacframe, &size);
+            if(ret == -1)
+                break;
+            else if(ret == 1){
+                memcpy(aacbuffer, input_data, data_size);
+                offset = data_size;
+                break;
+            }
+            char profile_str[10] = {0};
+            char frequence_str[10] = {0};
+
+            unsigned char profile = aacframe[2] & 0xC0;
+            profile = profile >> 6;
+            switch(profile){
+                case 0: sprintf(profile_str, "%s", "Main");break;
+                case 1: sprintf(profile_str, "%s", "LC");break;
+                case 2: sprintf(profile_str, "%s", "SSR");break;
+                default:sprintf(profile_str, "%s", "unknown");break;
+            }
+
+            unsigned char sampling_frequency_index = aacframe[2] & 0x3C;
+            sampling_frequency_index = sampling_frequency_index >> 2;
+            switch(sampling_frequency_index){
+                case 0: sprintf(frequence_str, "%s", "96000Hz");break;
+                case 1: sprintf(frequence_str, "%s", "88200Hz");break;
+                case 2: sprintf(frequence_str, "%s", "64000Hz");break;
+                case 3: sprintf(frequence_str, "%s", "48000Hz");break;
+                case 4: sprintf(frequence_str, "%s", "44100Hz");break;
+                case 5: sprintf(frequence_str, "%s", "32000Hz");break;
+                case 6: sprintf(frequence_str, "%s", "24000Hz");break;
+                case 7: sprintf(frequence_str, "%s", "22050Hz");break;
+                case 8: sprintf(frequence_str, "%s", "16000Hz");break;
+                case 9: sprintf(frequence_str, "%s", "12000Hz");break;
+                case 10: sprintf(frequence_str, "%s", "11025Hz");break;
+                case 11: sprintf(frequence_str, "%s", "8000Hz");break;
+                default:sprintf(frequence_str, "%s", "unknown");break;
+            }
+
+            fprintf(outputAACAnalysisFile,"%5d| %8s|  %8s| %5d|\n", cnt, profile_str, frequence_str, size);
+            data_size -= size;
+            input_data += size;
+            cnt++;
+        }
+    }
+
+    fclose(outputAACAnalysisFile);
+    fclose(outputAACFile);
+    env -> ReleaseStringUTFChars(rootOutputPath, outputPath);
+    env->ReleaseByteArrayElements(byteArray, aac_jbyte, 0);
+}
 #ifdef __cplusplus
 }
 #endif
