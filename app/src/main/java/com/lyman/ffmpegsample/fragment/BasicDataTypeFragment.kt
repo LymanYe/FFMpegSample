@@ -21,6 +21,9 @@ class BasicDataTypeFragment: BaseFragment() {
     private val AAC_ROOT_PATH by lazy {
         activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType" + File.separator + "AAC"
     }
+    private val FLV_ROOT_PATH by lazy {
+        activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType" + File.separator + "FLV"
+    }
     private val mBasicDataTypeJNI: BasicDataTypeJNI by lazy {
         BasicDataTypeJNI()
     }
@@ -84,6 +87,18 @@ class BasicDataTypeFragment: BaseFragment() {
                 if(bArrays != null) {
                     Thread( Runnable {
                         mBasicDataTypeJNI.analysisAACFormat(bArrays, AAC_ROOT_PATH)
+                    }).start()
+                    showToast("File save to $rootPath")
+                }
+            }
+            DATA_TYPE.BASIC_DATA_FLV -> {
+                var bArrays: ByteArray? = readAssetsFileToByteArray("output.flv")
+                var rootPath = File(FLV_ROOT_PATH)
+                if(!rootPath.exists())
+                    rootPath.mkdirs()
+                if(bArrays != null) {
+                    Thread( Runnable {
+                        mBasicDataTypeJNI.analysisFLVFormat(bArrays, FLV_ROOT_PATH)
                     }).start()
                     showToast("File save to $rootPath")
                 }

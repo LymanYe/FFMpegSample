@@ -39,4 +39,7 @@ class BasicDataTypeJNI {
 
 
     external fun analysisAACFormat(byteArray: ByteArray, saveRootPath: String)
+
+
+    external fun analysisFLVFormat(byteArray: ByteArray, saveRootPath: String)
 }

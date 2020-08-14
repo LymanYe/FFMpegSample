@@ -7,6 +7,8 @@
 
 #include <jni.h>
 #include <android/log.h>
+#include <sys/types.h>
+#include "FLVData.h"
 
 
 // Print log
@@ -209,4 +211,26 @@ typedef struct t_h265_nalu
 
     unsigned char *bodyData;
 } T_H265_NALU;
+
+
+// FLV
+#define TAG_TYPE_SCRIPT 18
+#define TAG_TYPE_AUDIO  8
+#define TAG_TYPE_VIDEO  9
+
+typedef unsigned char byte;
+typedef struct {
+    byte Signature[3];
+    byte Version;
+    byte Flags;
+    uint DataOffset;
+} FLV_HEADER;
+
+typedef struct {
+    byte TagType;
+    byte DataSize[3];
+    byte Timestamp[3];
+    uint Reserved;
+} TAG_HEADER;
+
 #endif //FFMPEGSAMPLE_BASICDATATYPE_H

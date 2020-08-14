@@ -609,7 +609,7 @@ void ParseNaluData(const unsigned int naluLen, unsigned char* const nuluData, FI
         case HEVC_NAL_SPS:sprintf(typeStr, "%s", "SPS");break;
         case HEVC_NAL_PPS:sprintf(typeStr, "%s", "PPS");break;
         case HEVC_NAL_SEI_PREFIX:sprintf(typeStr, "%s", "SEI");break;
-        default:sprintf(typeStr, "%s", "NTYPE(%d)", h265NaluHeader.nal_unit_type);break;
+        default:sprintf(typeStr, "NTYPE(%d)", h265NaluHeader.nal_unit_type);break;
     }
 
     fprintf(file, "%5d| %7s| %8d|\n", naluNum, typeStr, naluLen);
@@ -790,7 +790,6 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_a
     }
     LOGD(TAG, "analysisAACFormat, output analysis file path: %s", outputAACAnalysisFilePath);
     LOGD(TAG, "analysisAACFormat, output aac file path: %s", outputAACFilePath);
-    h264bitstream = fopen(outputAACFilePath, "rb+");
 
     int data_size = 0;
     int size = 0;
@@ -861,6 +860,173 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_a
 
     fclose(outputAACAnalysisFile);
     fclose(outputAACFile);
+    env -> ReleaseStringUTFChars(rootOutputPath, outputPath);
+    env->ReleaseByteArrayElements(byteArray, aac_jbyte, 0);
+}
+
+
+//reverse_bytes - turn a BigEndian byte array into a LittleEndian integer
+uint reverse_bytes(byte *p, char c) {
+    int r = 0;
+    int i;
+    for (i=0; i<c; i++)
+        r |= ( *(p+i) << (((c-1)*8)-8*i));
+    return r;
+}
+
+
+int getw(FILE *fp)
+{
+    char s[2];
+    s[0] = getc(fp);
+    s[1] = getc(fp);
+    return *(int*)s;
+}
+
+//如果字节序为big-endian，返回true;
+//反之为   little-endian，返回false
+int IsBig_Endian()
+{
+    unsigned short test = 0x1122;
+    if(*( (unsigned char*) &test ) == 0x11)
+        return JNI_TRUE;
+    else
+        return JNI_FALSE;
+}
+
+// FLV格式参考：https://blog.csdn.net/leixiaohua1020/article/details/17934487
+// 提取数据参考：https://www.w3xue.com/exp/article/20193/23148.html
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_analysisFLVFormat
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath) {
+    jbyte *aac_jbyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *aac_buffer = (unsigned char *)aac_jbyte;
+    int byteLength = env->GetArrayLength(byteArray);
+    char *outputPath = const_cast<char *>(env->GetStringUTFChars(rootOutputPath, JNI_FALSE));
+    LOGD(TAG, "analysisFLVFormat, is big endian start: %s", "lyman");
+    LOGD(TAG, "analysisFLVFormat, is big endian: %d", IsBig_Endian());
+    // save file
+    FILE *outputFLVFile;
+    char outputFLVFilePath[120] = {0};
+    sprintf(outputFLVFilePath, "%s%s", outputPath, "/output.flv");
+    if((outputFLVFile = fopen(outputFLVFilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisFLVFormat, failed to create output flv file path");
+        return;
+    }
+    fwrite(aac_buffer, 1, byteLength, outputFLVFile);
+    // save analysis result
+    FILE *outputFLVAnalysisFile;
+    char outputFLVAnalysisFilePath[120] = {0};
+    sprintf(outputFLVAnalysisFilePath, "%s%s", outputPath, "/output.txt");
+    if((outputFLVAnalysisFile = fopen(outputFLVAnalysisFilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisFVLFormat, failed to create output analysis file path");
+        return;
+    }
+    LOGD(TAG, "analysisFLVFormat, output analysis file path: %s", outputFLVAnalysisFilePath);
+    LOGD(TAG, "analysisFLVFormat, output flv file path: %s", outputFLVFilePath);
+
+    int dataLen = 0;
+
+    FILE *fp = NULL;
+    FILE *extractAudioFile = NULL;
+    FILE *extractVideoFile = NULL;
+
+    unsigned char *tagData = NULL;
+
+    unsigned char flvHeaderData[MIN_FLV_HEADER_LEN+1] = {0};
+    unsigned char preTagSizeData[MAX_PRE_TAG_SIZE_LEN+1] = {0};
+    unsigned char tagHeaderData[MAX_TAG_HEADER_LEN+1] = {0};
+
+    T_FLV_TAG_HEADER tagHeader = {0};
+
+    fp = fopen(outputFLVFilePath, "rb");
+    if (!fp)
+    {
+        LOGD(TAG, "analysisFLVFormat, open file [%s] error!\n", outputFLVFilePath);
+        return;
+    }
+
+    memset(flvHeaderData, 0x0, sizeof(flvHeaderData));
+
+    dataLen = fread(flvHeaderData, 1, MIN_FLV_HEADER_LEN, fp);
+    if (dataLen != MIN_FLV_HEADER_LEN)
+    {
+        LOGD(TAG, "analysisFLVFormat, read flv header error!\n");
+        return;
+    }
+
+    flvHeaderData[MIN_FLV_HEADER_LEN] = '\0';
+
+    DealFlvHeader(flvHeaderData, outputFLVAnalysisFile);
+
+    fprintf(outputFLVAnalysisFile,"%s", "-----+- FLV TAG Table -+------+\n");
+    fprintf(outputFLVAnalysisFile,"%s", " NUM | Type | Size | TimeStamp \n");
+    fprintf(outputFLVAnalysisFile,"%s", "-----+---------+----------+--------+\n");
+    while (1)
+    {
+        memset(preTagSizeData, 0x0, sizeof(preTagSizeData));
+
+        dataLen = fread(preTagSizeData, 1, MAX_PRE_TAG_SIZE_LEN, fp);
+        if (dataLen != MAX_PRE_TAG_SIZE_LEN)
+        {
+            break;
+        }
+
+        preTagSizeData[MAX_PRE_TAG_SIZE_LEN] = '\0';
+
+        fprintf(outputFLVAnalysisFile, "previousTagSize: %d\n", (preTagSizeData[0]<<24) | (preTagSizeData[1]<<16) | (preTagSizeData[2]<<8) | preTagSizeData[3]);
+
+        memset(tagHeaderData, 0x0, sizeof(tagHeaderData));
+
+        dataLen = fread(tagHeaderData, 1, MAX_TAG_HEADER_LEN, fp);
+        if (dataLen != MAX_TAG_HEADER_LEN)
+        {
+            continue;
+        }
+
+        memset(&tagHeader, 0x0, sizeof(T_FLV_TAG_HEADER));
+
+        DealTagHeader(tagHeaderData, &tagHeader, outputFLVAnalysisFile);
+
+        tagData = (unsigned char*)malloc(tagHeader.data_size);
+        if (!tagData)
+        {
+            continue;
+        }
+
+        memset(tagData, 0x0, tagHeader.data_size);
+
+        dataLen = fread(tagData, 1, tagHeader.data_size, fp);
+        if (dataLen != tagHeader.data_size)
+        {
+            continue;
+        }
+
+        DealTagData(tagData, tagHeader.type, tagHeader.data_size);
+
+        // todo save extract h264 & aac file
+        switch (tagHeader.type){
+            // video
+            case 0x9:
+                break;
+
+            // audio
+            case 0x8:
+                if(extractAudioFile == NULL){
+                    char outputFLVAudioPath[120] = {0};
+                    sprintf(outputFLVAudioPath, "%s%s", outputPath, "/extract_output.aac");
+                    extractAudioFile = fopen(outputFLVAudioPath, "wb");
+                }
+                break;
+        }
+        free(tagData);
+        tagData = NULL;
+    }
+
+    if(extractAudioFile != NULL)
+        fclose(extractAudioFile);
+    fclose(fp);
+    fclose(outputFLVAnalysisFile);
+    fclose(outputFLVFile);
     env -> ReleaseStringUTFChars(rootOutputPath, outputPath);
     env->ReleaseByteArrayElements(byteArray, aac_jbyte, 0);
 }
