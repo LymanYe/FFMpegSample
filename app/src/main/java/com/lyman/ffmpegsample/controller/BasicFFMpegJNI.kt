@@ -9,4 +9,7 @@ class BasicFFMpegJNI {
 
 
     external fun getConfiguration(): String
+
+
+    external fun decodeVideoData2YUV420P(byteArray: ByteArray, saveRootPath: String, saveYUVDir: String)
 }

@@ -1,4 +1,4 @@
-package com.lyman.ffmpegsample.fragment
+package com.lyman.ffmpegsample.fragment.basicdatatype
 
 import android.os.Bundle
 import android.os.Environment
@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.lyman.ffmpegsample.R
 import com.lyman.ffmpegsample.controller.BasicDataTypeJNI
+import com.lyman.ffmpegsample.fragment.BaseFragment
 import java.io.File
 
 

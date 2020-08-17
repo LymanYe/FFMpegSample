@@ -1,4 +1,4 @@
-package com.lyman.ffmpegsample.fragment
+package com.lyman.ffmpegsample.fragment.basicdatatype
 
 import android.os.Bundle
 import android.os.Environment
@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.lyman.ffmpegsample.R
 import com.lyman.ffmpegsample.controller.BasicDataTypeJNI
+import com.lyman.ffmpegsample.fragment.BaseFragment
 import java.io.File
 
 
@@ -26,7 +27,11 @@ class BasicDataTypePCMFragment: BaseFragment() {
         savedInstanceState: Bundle?
     ): View? {
         var view: View = inflater.inflate(R.layout.fragment_basic_data_type, container, false)
-        list = listOf(DATA_TYPE.BASIC_DATA_PCM_SPLIT_16LE, DATA_TYPE.BASIC_DATA_PCM_HALF_VOLUME_LEFT, DATA_TYPE.BASIC_DATA_PCM_TO_WAVE)
+        list = listOf(
+            DATA_TYPE.BASIC_DATA_PCM_SPLIT_16LE,
+            DATA_TYPE.BASIC_DATA_PCM_HALF_VOLUME_LEFT,
+            DATA_TYPE.BASIC_DATA_PCM_TO_WAVE
+        )
         initView(view)
         return view
     }

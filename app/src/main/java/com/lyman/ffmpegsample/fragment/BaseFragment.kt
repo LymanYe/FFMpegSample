@@ -17,6 +17,8 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
     lateinit var mRecyclerView: RecyclerView
     lateinit var mRecyclerAdapter: MyRecyclerViewAdapter
     lateinit var list : List<DATA_TYPE>
+
+
     enum class DATA_TYPE(val text: String){
         BASIC_DATA("基础数据格式"),
         BASIC_DATA_RGB("RGB格式"),
@@ -38,9 +40,20 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         BASIC_DATA_FORMAT_CONVERSION_RGB_TO_YUV("RGB24 转换为YUV420P"),
         BASIC_FFMPEG("FFMpeg基础"),
         BASIC_FFMPEG_INTEGRATED("FFMpeg集成"),
+        BASIC_FFMPEG_AVCODEC("libavcodec示例"),
+        BASIC_FFMPEG_AVCODEC_DECODE_VIDEO("视频数据解码为YUV"),
+        BASIC_FFMPEG_AVDEVICE("libavdevice示例"),
+        BASIC_FFMPEG_AVFILTER("libavfilter示例"),
+        BASIC_FFMPEG_AVFORMAT("libavformat示例"),
+        BASIC_FFMPEG_AVUTIL("libavutil示例"),
+        BASIC_FFMPEG_POSTPROC("libpostproc示例"),
+        BASIC_FFMPEG_SWRESAMPLE("libswresample示例"),
+        BASIC_FFMPEG_SWSCALE("libswscale示例"),
         ENCODE("编码"),
         DECODER("解码")
     }
+
+
     inner class SpacesItemDecoration(private var space: Int): RecyclerView.ItemDecoration() {
         override fun getItemOffsets(
             outRect: Rect,
@@ -58,6 +71,7 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         }
     }
 
+
     fun initView(view: View) {
         if(list != null) {
             mRecyclerView = view.findViewById(R.id.recycler_view)
@@ -68,6 +82,7 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
             mRecyclerView.adapter = mRecyclerAdapter
         }
     }
+
 
     override fun onItemClick(view: View, position: Int) {
         var type = mRecyclerAdapter.getItem(position)
