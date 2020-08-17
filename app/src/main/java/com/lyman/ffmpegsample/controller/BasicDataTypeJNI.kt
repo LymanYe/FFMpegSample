@@ -42,4 +42,7 @@ class BasicDataTypeJNI {
 
 
     external fun analysisFLVFormat(byteArray: ByteArray, saveRootPath: String)
+
+
+    external fun analysisMP4Format(byteArray: ByteArray, saveRootPath: String)
 }

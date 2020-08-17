@@ -9,10 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <jni.h>
-#include <android/log.h>
+#include "Base.h"
 #define TAB44 "    "
-#define PRINTF_DEBUG
+#define PRINTF_FLV_DEBUG
 #define FLVTAG "FLVData"
 
 #define MAX_SIGNATURE_LEN 3
@@ -21,7 +20,6 @@
 #define MAX_TAG_HEADER_LEN 11
 #define MAX_PARSE_TAG_NUM 15
 #define MAX_AMF_STR_SIZE 255
-#define LOGD(tag, format, ...) __android_log_print(ANDROID_LOG_DEBUG, tag, format, ##__VA_ARGS__)
 
 /************************************************************************************************************
  **                                        flv header: 记录了flv的类型, 版本等信息, 是flv的开头, 一般都差不多, 占9bytes

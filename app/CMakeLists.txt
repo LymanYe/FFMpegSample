@@ -141,7 +141,8 @@ add_library( # Sets the name of the library.
         SHARED
         # Provides a relative path to your source file(s).
         src/main/cpp/BasicDataType.cpp
-        src/main/cpp/FLVData.cpp)
+        src/main/cpp/FLVData.cpp
+        src/main/cpp/MP4Data.cpp)
 target_link_libraries(
         basicdatatype
         ${log-lib})

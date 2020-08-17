@@ -24,6 +24,9 @@ class BasicDataTypeFragment: BaseFragment() {
     private val FLV_ROOT_PATH by lazy {
         activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType" + File.separator + "FLV"
     }
+    private val MP4_ROOT_PATH by lazy {
+        activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath + File.separator + "BasicDataType" + File.separator + "MP4"
+    }
     private val mBasicDataTypeJNI: BasicDataTypeJNI by lazy {
         BasicDataTypeJNI()
     }
@@ -100,6 +103,19 @@ class BasicDataTypeFragment: BaseFragment() {
                     Thread( Runnable {
                         mBasicDataTypeJNI.analysisFLVFormat(bArrays, FLV_ROOT_PATH)
                     }).start()
+                    showToast("File save to $rootPath")
+                }
+            }
+            DATA_TYPE.BASIC_DATA_MP4 -> {
+                var bArrays: ByteArray? = readAssetsFileToByteArray("output.mp4")
+                var rootPath = File(MP4_ROOT_PATH)
+                if(!rootPath.exists())
+                    rootPath.mkdirs()
+                if(bArrays != null) {
+                    //Thread( Runnable {
+                        mBasicDataTypeJNI.analysisMP4Format(bArrays, MP4_ROOT_PATH)
+                    //}).start()
+                    // result see logs, TAG: MP4Data
                     showToast("File save to $rootPath")
                 }
             }

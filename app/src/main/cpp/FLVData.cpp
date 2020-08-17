@@ -209,7 +209,7 @@ void DealScriptTagData(unsigned char* const tagData, unsigned int tagDataSize)
         data += 1;
         tagDataSize -= 1;
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
         LOGD(FLVTAG, "%s%s%sAMF%d type: %d\n", TAB44, TAB44, TAB44, amfIndex, amfType);
 #endif
 
@@ -218,7 +218,7 @@ void DealScriptTagData(unsigned char* const tagData, unsigned int tagDataSize)
             case 2:
                 amfStringSize = (data[0] << 8) | data[1];
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                 LOGD(FLVTAG, "%s%s%sAMF%d String size: %d\n", TAB44, TAB44, TAB44, amfIndex, amfStringSize);
 #endif
 
@@ -231,7 +231,7 @@ void DealScriptTagData(unsigned char* const tagData, unsigned int tagDataSize)
 
                 amfStr[amfStringSize] = '\0';
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                 LOGD(FLVTAG, "%s%s%sAMF%d String: %s\n", TAB44, TAB44, TAB44, amfIndex, amfStr);
 #endif
 
@@ -243,7 +243,7 @@ void DealScriptTagData(unsigned char* const tagData, unsigned int tagDataSize)
             case 8:
                 arrayCount = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
             LOGD(FLVTAG, "%s%s%sAMF%d Metadata count: %d\n", TAB44, TAB44, TAB44, amfIndex, arrayCount);
         LOGD(FLVTAG, "%s%s%s+Metadata\n", TAB44, TAB44, TAB44);
 #endif
@@ -264,7 +264,7 @@ void DealScriptTagData(unsigned char* const tagData, unsigned int tagDataSize)
 
                     amfStr[keySize] = '\0';
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                     LOGD(FLVTAG, "%s%s%s%s%s: ", TAB44, TAB44, TAB44, TAB44, amfStr);
 #endif
 
@@ -279,7 +279,7 @@ void DealScriptTagData(unsigned char* const tagData, unsigned int tagDataSize)
                     if (0 == valueType)
                     {
                         amfNum = dealAmfNumber(data);
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                         LOGD(FLVTAG, "%lf\n", amfNum);
 #endif
 
@@ -288,7 +288,7 @@ void DealScriptTagData(unsigned char* const tagData, unsigned int tagDataSize)
                     }
                     else if (1 == valueType)
                     {
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                         LOGD(FLVTAG, "%d\n", data[0]);
 #endif
                         data += 1;
@@ -307,7 +307,7 @@ void DealScriptTagData(unsigned char* const tagData, unsigned int tagDataSize)
 
                         amfStr[valueSize] = '\0';
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                         LOGD(FLVTAG, "%s\n", amfStr);
 #endif
 
@@ -350,7 +350,7 @@ void DealVideoTagData(unsigned char* const tagData)
 
     data++;
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
     LOGD(FLVTAG, "%s%s%sFrameType: %d\n", TAB44, TAB44, TAB44, vTagHeader.freameType);
     LOGD(FLVTAG, "%s%s%sCodecId: %d\n", TAB44, TAB44, TAB44, vTagHeader.codecId);
 #endif
@@ -368,7 +368,7 @@ void DealVideoTagData(unsigned char* const tagData)
 
             if (0 == avcVideoPacket.avcPacketType)
             {
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                 LOGD(FLVTAG, "%s%s%s+AVCVideoPacket\n", TAB44, TAB44, TAB44);
                 LOGD(FLVTAG, "%s%s%s%sAVCPacketType: %d\n", TAB44, TAB44, TAB44, TAB44, avcVideoPacket.avcPacketType);
                 LOGD(FLVTAG, "%s%s%s%sCompositionTime Offset: %d\n", TAB44, TAB44, TAB44, TAB44, avcVideoPacket.compositionTime);
@@ -392,7 +392,7 @@ void DealVideoTagData(unsigned char* const tagData)
 
                 // todo, parse pps
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
             LOGD(FLVTAG, "%s%s%s%s%sconfigurationVersion: %d\n", TAB44, TAB44, TAB44, TAB44, TAB44, avcVideoPacket.vp.avcDecCfg.configurationVersion);
             LOGD(FLVTAG, "%s%s%s%s%sAVCProfileIndication: %d\n", TAB44, TAB44, TAB44, TAB44, TAB44, avcVideoPacket.vp.avcDecCfg.AVCProfileIndication);
             LOGD(FLVTAG, "%s%s%s%s%sprofile_compatibility: %d\n", TAB44, TAB44, TAB44, TAB44, TAB44, avcVideoPacket.vp.avcDecCfg.profile_compatibility);
@@ -406,7 +406,7 @@ void DealVideoTagData(unsigned char* const tagData)
             }
             else
             {
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                 LOGD(FLVTAG, "%s%s%s+Video Data\n", TAB44, TAB44, TAB44);
                 LOGD(FLVTAG, "%s%s%s%sAVCPacketType: %d\n", TAB44, TAB44, TAB44, TAB44, avcVideoPacket.avcPacketType);
                 LOGD(FLVTAG, "%s%s%s%sCompositionTime Offset: %d\n", TAB44, TAB44, TAB44, TAB44, avcVideoPacket.compositionTime);
@@ -437,7 +437,7 @@ void DealAudioTagData(unsigned char* const tagData)
     audioHeader.soundSize = (data[0] >> 1) & 0x1;
     audioHeader.soundType = data[0] & 0x1;
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
     LOGD(FLVTAG, "%s%s%sSoundFormat: %d\n", TAB44, TAB44, TAB44, audioHeader.soundFormat);
 
     switch (audioHeader.soundRate)
@@ -503,7 +503,7 @@ void DealAudioTagData(unsigned char* const tagData)
 
             if (0 == aPacket.aacPacketType)
             {
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                 LOGD(FLVTAG, "%s%s%s+AACAudioData\n", TAB44, TAB44, TAB44);
                 LOGD(FLVTAG, "%s%s%s%sAACPacketType: %d\n", TAB44, TAB44, TAB44, TAB44, aPacket.aacPacketType);
 #endif
@@ -511,7 +511,7 @@ void DealAudioTagData(unsigned char* const tagData)
                 aPacket.ap.aacSpecCfg.samplingFreqIndex = ((data[1] & 0x7) << 1) | ((data[2] >> 7) & 0x1);
                 aPacket.ap.aacSpecCfg.channelCfg = (data[2] >> 3) & 0xf;
 
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                 LOGD(FLVTAG, "%s%s%s%s+AudioSpecificConfig\n", TAB44, TAB44, TAB44, TAB44);
 
                 LOGD(FLVTAG, "%s%s%s%s%sAudioObjectType: %d\n", TAB44, TAB44, TAB44, TAB44, TAB44, aPacket.ap.aacSpecCfg.audioObjectType);
@@ -521,7 +521,7 @@ void DealAudioTagData(unsigned char* const tagData)
             }
             else
             {
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
                 LOGD(FLVTAG, "%s%s%s+AACAudioData\n", TAB44, TAB44, TAB44);
                 LOGD(FLVTAG, "%s%s%s%sAACPacketType: %d\n", TAB44, TAB44, TAB44, TAB44, aPacket.aacPacketType);
                 LOGD(FLVTAG, "%s%s%s%sData(Raw AAC frame data)\n", TAB44, TAB44, TAB44, TAB44);
@@ -537,7 +537,7 @@ void DealAudioTagData(unsigned char* const tagData)
 
 void DealTagData(unsigned char* const tagData, const int tagType, const unsigned int tagSize)
 {
-#ifdef PRINTF_DEBUG
+#ifdef PRINTF_FLV_DEBUG
     LOGD(FLVTAG, "%s%s%s\n", TAB44, TAB44, "+Tag Data");
 #endif
 

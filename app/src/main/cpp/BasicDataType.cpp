@@ -898,8 +898,8 @@ int IsBig_Endian()
 // 提取数据参考：https://www.w3xue.com/exp/article/20193/23148.html
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_analysisFLVFormat
         (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath) {
-    jbyte *aac_jbyte = env->GetByteArrayElements(byteArray, 0);
-    unsigned char *aac_buffer = (unsigned char *)aac_jbyte;
+    jbyte *flv_jbyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *flv_buffer = (unsigned char *)flv_jbyte;
     int byteLength = env->GetArrayLength(byteArray);
     char *outputPath = const_cast<char *>(env->GetStringUTFChars(rootOutputPath, JNI_FALSE));
     LOGD(TAG, "analysisFLVFormat, is big endian start: %s", "lyman");
@@ -912,7 +912,7 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_a
         LOGE(TAG, "analysisFLVFormat, failed to create output flv file path");
         return;
     }
-    fwrite(aac_buffer, 1, byteLength, outputFLVFile);
+    fwrite(flv_buffer, 1, byteLength, outputFLVFile);
     // save analysis result
     FILE *outputFLVAnalysisFile;
     char outputFLVAnalysisFilePath[120] = {0};
@@ -1028,7 +1028,86 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_a
     fclose(outputFLVAnalysisFile);
     fclose(outputFLVFile);
     env -> ReleaseStringUTFChars(rootOutputPath, outputPath);
-    env->ReleaseByteArrayElements(byteArray, aac_jbyte, 0);
+    env->ReleaseByteArrayElements(byteArray, flv_jbyte, 0);
+}
+
+
+// MP4格式参考:https://www.cnblogs.com/ranson7zop/p/7889272.html http://www.52rd.com/Blog/wqyuwss/559/
+// MP4格式解析参考：https://www.cnblogs.com/Kingfans/p/7170478.html
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_analysisMP4Format
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath) {
+    jbyte *mp4_jbyte = env->GetByteArrayElements(byteArray, 0);
+    unsigned char *mp4_buffer = (unsigned char *)mp4_jbyte;
+    int byteLength = env->GetArrayLength(byteArray);
+    char *outputPath = const_cast<char *>(env->GetStringUTFChars(rootOutputPath, JNI_FALSE));
+    // save file
+    FILE *outputMP4File;
+    char outputMP4FilePath[120] = {0};
+    sprintf(outputMP4FilePath, "%s%s", outputPath, "/output.mp4");
+    if((outputMP4File = fopen(outputMP4FilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisMP4Format, failed to create output mp4 file path");
+        return;
+    }
+    fwrite(mp4_buffer, 1, byteLength, outputMP4File);
+    // save analysis result
+    FILE *outputMP4AnalysisFile;
+    char outputMP4AnalysisFilePath[120] = {0};
+    sprintf(outputMP4AnalysisFilePath, "%s%s", outputPath, "/output.txt");
+    if((outputMP4AnalysisFile = fopen(outputMP4AnalysisFilePath,"wb")) == NULL){
+        LOGE(TAG, "analysisMP4Format, failed to create output analysis file path");
+        return;
+    }
+    LOGD(TAG, "analysisMP4Format, output analysis file path: %s", outputMP4AnalysisFilePath);
+    LOGD(TAG, "analysisMP4Format, output mp4 file path: %s", outputMP4FilePath);
+
+    FILE *fp = NULL;
+    fp = fopen(outputMP4FilePath, "rb");
+    if (!fp)
+    {
+        LOGD(TAG, "analysisMP4Format, open file [%s] error!\n", outputMP4FilePath);
+        return;
+    }
+    unsigned char boxSize[MAX_BOX_SIZE_LEN] = {0};
+    T_BOX box = {0};
+
+    while (1)
+    {
+        memset(&box, 0x0, sizeof(T_BOX));
+
+        if (fread(boxSize, 1, 4, fp) <= 0)
+        {
+            break;
+        }
+
+        box.boxHeader.boxSize = boxSize[0] << 24 | boxSize[1] << 16 | boxSize[2] << 8 | boxSize[3];
+
+        fread(box.boxHeader.boxType, 1, 4, fp);
+
+        box.boxHeader.boxType[MAX_BOX_TYPE_LEN] = '\0';
+
+        box.boxData = (unsigned char*)malloc(box.boxHeader.boxSize-MAX_BOX_SIZE_LEN-MAX_BOX_TYPE_LEN);
+        if (!box.boxData)
+        {
+            LOGE(TAG, "analysisMP4Format, malloc data error!\n");
+            break;
+        }
+
+        fread(box.boxData, 1, box.boxHeader.boxSize-MAX_BOX_SIZE_LEN-MAX_BOX_TYPE_LEN, fp);
+
+        /* deal box data */
+        DealBox(&box);
+
+        /* free box */
+        free(box.boxData);
+
+        box.boxData = NULL;
+    }
+
+    fclose(fp);
+    fclose(outputMP4AnalysisFile);
+    fclose(outputMP4File);
+    env -> ReleaseStringUTFChars(rootOutputPath, outputPath);
+    env->ReleaseByteArrayElements(byteArray, mp4_jbyte, 0);
 }
 #ifdef __cplusplus
 }
