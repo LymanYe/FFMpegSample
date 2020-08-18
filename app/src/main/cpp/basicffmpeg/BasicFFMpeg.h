@@ -5,7 +5,7 @@
 #ifndef FFMPEGSAMPLE_BASICFFMPEG_H
 #define FFMPEGSAMPLE_BASICFFMPEG_H
 
-#include "Base.h"
+#include "../base/Base.h"
 
 #define TAG "BasicFFMpeg"
 #define TAG_FFMPEG "FFMpeg"

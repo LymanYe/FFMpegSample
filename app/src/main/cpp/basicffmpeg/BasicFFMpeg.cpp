@@ -8,8 +8,8 @@ extern "C" {
 
 #include <jni.h>
 #include <stdio.h>
-#include "include/libavcodec/avcodec.h"
-#include "include/libavutil/log.h"
+#include "libavcodec/avcodec.h"
+#include "libavutil/log.h"
 
 #include <sys/stat.h>
 

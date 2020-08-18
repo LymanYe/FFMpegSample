@@ -6,7 +6,7 @@
 #define FFMPEGSAMPLE_BASICDATATYPE_H
 
 #include <sys/types.h>
-#include "Base.h"
+#include "../base/Base.h"
 #include "FLVData.h"
 #include "MP4Data.h"
 

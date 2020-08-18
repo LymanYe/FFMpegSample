@@ -2,7 +2,7 @@
 // Created by Lyman on 2020/8/17.
 //
 
-#include "include/MP4Data.h"
+#include "MP4Data.h"
 
 void DealBox4ftyp(const T_BOX *box)
 {
