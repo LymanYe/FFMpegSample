@@ -6,8 +6,8 @@ set(ROOT_SRC_DIR ${PROJECT_SOURCE_DIR}/src/main/cpp)
 set(BASE ${ROOT_SRC_DIR}/base)
 set(JNI_LIBS "${CMAKE_SOURCE_DIR}/src/main/jniLibs")
 set(FFMPEG_INC ${ROOT_SRC_DIR}/ffmpeg)
-set(BASIC_DATA_TYPE ${ROOT_SRC_DIR}/basicdatatype)
-set(BASIC_FFMPEG ${ROOT_SRC_DIR}/basicffmpeg)
+set(BASIC_DATA_TYPE_SRC ${ROOT_SRC_DIR}/basicdatatype)
+set(BASIC_FFMPEG_SRC ${ROOT_SRC_DIR}/basicffmpeg)
 
 
 #設置自定義lib輸出位置
@@ -16,19 +16,20 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${JNI_LIBS}/${ANDROID_ABI})
 
 #設置cpp源文件目錄
 aux_source_directory(${BASE} base)
-aux_source_directory(${BASIC_DATA_TYPE} basicdatatype)
-aux_source_directory(${BASIC_FFMPEG} basicffmpeg)
+aux_source_directory(${BASIC_DATA_TYPE_SRC} basicdatatypesrc)
+aux_source_directory(${BASIC_FFMPEG_SRC} basicffmpegsrc)
 
 
 #引入源文件.h目录
 include_directories(${FFMPEG_INC})
 include_directories(${BASE})
-include_directories(${BASIC_DATA_TYPE})
-include_directories(${BASIC_FFMPEG})
+include_directories(${BASIC_DATA_TYPE_SRC})
+include_directories(${BASIC_FFMPEG_SRC})
 
 
 #添加共享庫搜索路徑
 LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/main/jniLibs/${CMAKE_ANDROID_ARCH_ABI})
+
 
 #import android log
 find_library(
@@ -46,7 +47,7 @@ add_library(
         SHARED
         # Provides a relative path to your source file(s).
         ${base}
-        ${basicffmpeg})
+        ${basicffmpegsrc})
 
 target_link_libraries(
         basicffmpeg
@@ -64,7 +65,7 @@ add_library( # Sets the name of the library.
         SHARED
         # Provides a relative path to your source file(s).
         ${base}
-        ${basicdatatype})
+        ${basicdatatypesrc})
 
 target_link_libraries(
         basicdatatype

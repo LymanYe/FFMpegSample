@@ -17,6 +17,9 @@
 #define LOGW(tag, format, ...) __android_log_print(ANDROID_LOG_WARN, tag, format, ##__VA_ARGS__)
 
 
-std::string jstring2string(JNIEnv *env, jstring jStr);
+char* jstring2cchar(JNIEnv *env, jstring jStr);
+
+
+jbyte * jbyteArray2cbyte(JNIEnv *env, jbyteArray jArrays);
 
 #endif //FFMPEGSAMPLE_BASE_H

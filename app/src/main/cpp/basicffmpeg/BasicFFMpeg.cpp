@@ -2,6 +2,8 @@
 // Created by lyman on 2020/7/31.
 //
 #include "BasicFFMpeg.h"
+#include "AudioDecoder.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,8 +17,6 @@ extern "C" {
 #include <sys/stat.h>
 
 #define INBUF_SIZE 4096
-#define AUDIO_INBUF_SIZE 20480
-#define AUDIO_REFILL_THRESH 4096
 
 
 void my_log_output(void* ptr, int level, const char* fmt, va_list vl) {
@@ -252,72 +252,14 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_dec
 }
 
 
-static void decodeAudio(AVCodecContext *dec_ctx, AVPacket *pkt, AVFrame *frame,
-                   FILE *outfile)
-{
-    int i, ch;
-    int ret, data_size;
-
-    /* send the packet with the compressed data to the decoder */
-    ret = avcodec_send_packet(dec_ctx, pkt);
-    if (ret < 0) {
-        LOGE(TAG,"decodeAudio, Error submitting the packet to the decoder\n");
-        return;
-    }
-
-    /* read all the output frames (in general there may be any number of them */
-    while (ret >= 0) {
-        ret = avcodec_receive_frame(dec_ctx, frame);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-            return;
-        else if (ret < 0) {
-            LOGE(TAG,"decodeAudio, Error during decoding\n");
-            return;
-        }
-        data_size = av_get_bytes_per_sample(dec_ctx->sample_fmt);
-        if (data_size < 0) {
-            /* This should not occur, checking just for paranoia */
-            LOGE(TAG,"decodeAudio, Failed to calculate data size\n");
-            return;
-        }
-
-        LOGD(TAG, "decodeAudio, nb_samples: %d, channels: %d, sample_rate: %d, data_size: %d, sample_fmt: %d, AV_SAMPLE_FMT_S16: %d", frame->nb_samples, dec_ctx->channels, dec_ctx->sample_rate, data_size, dec_ctx->sample_fmt, AV_SAMPLE_FMT_S16);
-
-        size_t unpadded_linesize = frame->nb_samples * av_get_bytes_per_sample(
-                static_cast<AVSampleFormat>(frame->format));
-        //FLAC格式的文件，解码后数据都放在frame->data[0]中，长度可根据frame->linesize[0]来获取。
-        //原始代码不同声道数据存在不同的frame->data[i]中。
-        for (i = 0; i < frame->nb_samples; i++)
-            for (ch = 0; ch < dec_ctx->channels; ch++)
-                fwrite(frame->data[ch] + data_size*i, 1, data_size, outfile);
-
-        //仅保存单通道数据。
-//        for (i = 0; i < frame->nb_samples; i++)
-//        	fwrite(frame->data[0] + i * data_size*dec_ctx->channels, 1, data_size, outfile);
-
-        /* Write the raw audio data samples of the first plane. This works
-             * fine for packed formats (e.g. AV_SAMPLE_FMT_S16). However,
-             * most audio decoders output planar audio, which uses a separate
-             * plane of audio samples for each channel (e.g. AV_SAMPLE_FMT_S16P).
-             * In other words, this code will write only the first audio channel
-             * in these cases.
-             * You should use libswresample or libavfilter to convert the frame
-             * to packed data. */
-
-        //fwrite(frame->data[0], 1, unpadded_linesize, outfile);
-    }
-}
-
-
-
 // decode aac to pcm
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_decodeAudioData2PCM
-        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath, jstring yuvDir) {
-    jbyte *audio_array = env->GetByteArrayElements(byteArray, 0);
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath, jstring aacDir) {
+    jbyte *audio_array = jbyteArray2cbyte(env, byteArray);
     unsigned char *audio_buffer = (unsigned char *)audio_array;
     int audio_length = env->GetArrayLength(byteArray);
-    char *root_path = const_cast<char *>(env->GetStringUTFChars(rootOutputPath, 0));
-    char *save_pcm_dir = const_cast<char *>(env->GetStringUTFChars(yuvDir, 0));
+    char *root_path = jstring2cchar(env, rootOutputPath);
+    char *save_pcm_dir = jstring2cchar(env, aacDir);
     char pcm_full_name[150];
     sprintf(pcm_full_name, "%s%s", save_pcm_dir, "/output.pcm");
     // save file
@@ -331,108 +273,8 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_dec
     fwrite(audio_buffer, 1, audio_length, input_audio_file);
     fclose(input_audio_file);
 
-    const char *outfilename, *filename;
-    const AVCodec *codec;
-    AVCodecContext *c= NULL;
-    AVCodecParserContext *parser = NULL;
-    int len, ret;
-    FILE *f, *outfile;
-    uint8_t inbuf[AUDIO_INBUF_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
-    uint8_t *data;
-    size_t   data_size;
-    AVPacket *pkt;
-    AVFrame *decoded_frame = NULL;
-
-    filename    = input_audio_file_path;
-    outfilename = pcm_full_name;
-
-    pkt = av_packet_alloc();
-
-    codec = avcodec_find_decoder(AV_CODEC_ID_MP3);
-    if (!codec) {
-        LOGE(TAG, "decodeAudioData2PCM, Codec not found\n");
-        return;
-    }
-
-    parser = av_parser_init(codec->id);
-    if (!parser) {
-        LOGE(TAG, "decodeAudioData2PCM, Parser not found\n");
-        return;
-    }
-
-    c = avcodec_alloc_context3(codec);
-    if (!c) {
-        LOGE(TAG, "decodeAudioData2PCM, Could not allocate audio codec context\n");
-        return;
-    }
-
-    /* open it */
-    if (avcodec_open2(c, codec, NULL) < 0) {
-        LOGE(TAG, "decodeAudioData2PCM, Could not open codec\n");
-        return;
-    }
-
-    f = fopen(filename, "rb");
-    if (!f) {
-        LOGE(TAG, "decodeAudioData2PCM, Could not open %s\n", filename);
-        return;
-    }
-    outfile = fopen(outfilename, "wb");
-    if (!outfile) {
-        av_free(c);
-        return;
-    }
-
-    /* decode until eof */
-    data      = inbuf;
-    data_size = fread(inbuf, 1, AUDIO_INBUF_SIZE, f);
-
-    while (data_size > 0) {
-        if (!decoded_frame) {
-            if (!(decoded_frame = av_frame_alloc())) {
-                LOGE(TAG, "decodeAudioData2PCM, Could not allocate audio frame\n");
-                return;
-            }
-        }
-
-        ret = av_parser_parse2(parser, c, &pkt->data, &pkt->size,
-                               data, data_size,
-                               AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
-        if (ret < 0) {
-            LOGE(TAG, "decodeAudioData2PCM, Error while parsing\n");
-            return;
-        }
-        data      += ret;
-        data_size -= ret;
-
-        if (pkt->size)
-            decodeAudio(c, pkt, decoded_frame, outfile);
-
-        if (data_size < AUDIO_REFILL_THRESH) {
-            memmove(inbuf, data, data_size);
-            data = inbuf;
-            len = fread(data + data_size, 1,
-                        AUDIO_INBUF_SIZE - data_size, f);
-            if (len > 0)
-                data_size += len;
-        }
-    }
-
-    /* flush the decoder */
-    pkt->data = NULL;
-    pkt->size = 0;
-    decodeAudio(c, pkt, decoded_frame, outfile);
-
-    fclose(outfile);
-    fclose(f);
-    avcodec_free_context(&c);
-    av_parser_close(parser);
-    av_frame_free(&decoded_frame);
-    av_packet_free(&pkt);
-
-    env->ReleaseStringUTFChars(yuvDir, save_pcm_dir);
-    env->ReleaseStringUTFChars(rootOutputPath, root_path);
-    env->ReleaseByteArrayElements(byteArray, audio_array, 0);
+    AudioDecoder *audioDecoder = new AudioDecoder(input_audio_file_path, pcm_full_name);
+    audioDecoder->decodeAAC2PCM();
 }
 
 // 参考相关知识：https://blog.csdn.net/leixiaohua1020/article/details/39702113

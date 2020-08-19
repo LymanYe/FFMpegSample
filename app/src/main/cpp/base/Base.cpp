@@ -4,9 +4,15 @@
 
 #include "Base.h"
 
-std::string jstring2string(JNIEnv *env, jstring jStr){
-    const char *cstr = env->GetStringUTFChars(jStr, NULL);
-    std::string str = std::string(cstr);
+char* jstring2cchar(JNIEnv *env, jstring jStr){
+    char *cstr = const_cast<char *>(env->GetStringUTFChars(jStr, NULL));
     env->ReleaseStringUTFChars(jStr, cstr);
-    return str;
+    return cstr;
+}
+
+
+jbyte * jbyteArray2cbyte(JNIEnv *env, jbyteArray jArrays){
+    jbyte * bytearray = env->GetByteArrayElements(jArrays, 0);
+    env->ReleaseByteArrayElements(jArrays, bytearray, 0);
+    return bytearray;
 }

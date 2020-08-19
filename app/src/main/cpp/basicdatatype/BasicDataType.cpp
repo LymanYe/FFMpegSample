@@ -2,7 +2,6 @@
 // Created by lyman on 2020/7/31.
 //
 #include "BasicDataType.h"
-#include <stdio.h>
 #include <string.h>
 #include <malloc.h>
 
@@ -15,7 +14,7 @@ extern "C" {
 // RGB 格式简介可参考：https://cloud.tencent.com/developer/article/1612538
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_splitRGB24
         (JNIEnv *env, jobject js, jbyteArray byteArray, jint width, jint height, jstring path) {
-    char *nativePath = const_cast<char *>(env->GetStringUTFChars(path, JNI_FALSE));
+    char *nativePath = jstring2cchar(env, path);
     // 生成图片storage/emulated/0/Android/data/com.lyman.ffmpegsample/files/Pictures/BasicDataType/RGB/r.rgb
     // 使用工具yuvplayer以分辨率width、height格式为Y查看提取的图片分量
     char *rPathStr = (char *) malloc(strlen(nativePath) + strlen("/r.rgb"));
@@ -61,7 +60,6 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicDataTypeJNI_s
     fclose(bFile);
     env->ReleaseByteArrayElements(byteArray, databyte, 0);
     pic = NULL;
-    env->ReleaseStringUTFChars(path, nativePath);
 }
 
 
