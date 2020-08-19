@@ -41,8 +41,10 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         BASIC_FFMPEG("FFMpeg基础"),
         BASIC_FFMPEG_INTEGRATED("FFMpeg集成"),
         BASIC_FFMPEG_AVCODEC("libavcodec示例"),
-        BASIC_FFMPEG_AVCODEC_DECODE_VIDEO("视频数据解码为YUV"),
+        BASIC_FFMPEG_AVCODEC_DECODE_VIDEO("视频数据H264解码为YUV420P"),
+        BASIC_FFMPEG_AVCODEC_DECODE_AUDIO("音频数据AAC数据解码为PCM"),
         BASIC_FFMPEG_AVDEVICE("libavdevice示例"),
+        BASIC_FFMPEG_AVDEVICE_NATIVE_CAMERA("native抓取Camera YUV数据"),
         BASIC_FFMPEG_AVFILTER("libavfilter示例"),
         BASIC_FFMPEG_AVFORMAT("libavformat示例"),
         BASIC_FFMPEG_AVUTIL("libavutil示例"),
@@ -122,5 +124,11 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
     fun showFragment(dataType: DATA_TYPE) {
         var mainActivity: MainActivity = activity as MainActivity
         mainActivity.showFragment(dataType)
+    }
+
+
+    fun showFragment(dataType: DATA_TYPE, tag: String) {
+        var mainActivity: MainActivity = activity as MainActivity
+        mainActivity.showFragment(dataType, tag)
     }
 }

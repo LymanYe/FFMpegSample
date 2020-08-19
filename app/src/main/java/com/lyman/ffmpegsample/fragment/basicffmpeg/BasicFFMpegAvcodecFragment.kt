@@ -27,7 +27,8 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
     ): View? {
         var view: View = inflater.inflate(R.layout.fragment_basic_data_type, container, false)
         list = listOf(
-            DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_VIDEO
+            DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_VIDEO,
+            DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_AUDIO
         )
         initView(view)
         return view
@@ -55,9 +56,25 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
                     }).start()
                 }
             }
+            DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_AUDIO -> {
+                var bArrays: ByteArray? = readAssetsFileToByteArray("output.mp3")
+                var rootPath = File(AVCODEC_ROOT_PATH)
+                if(!rootPath.exists())
+                    rootPath.mkdirs()
+                var pcmDir = File(AVCODEC_ROOT_PATH + File.separator + "decode_pcm")
+                if(!pcmDir.exists())
+                    pcmDir.mkdirs()
+                if(bArrays != null) {
+                    Thread( Runnable {
+                        mBasicFFMpegJNI.decodeAudioData2PCM(bArrays, AVCODEC_ROOT_PATH, pcmDir.absolutePath)
+                        activity?.runOnUiThread {
+                            showToast("File save to $rootPath")
+                        }
+
+                    }).start()
+                }
+            }
             else -> super.onItemClick(view, position)
         }
     }
-
-
 }

@@ -12,4 +12,10 @@ class BasicFFMpegJNI {
 
 
     external fun decodeVideoData2YUV420P(byteArray: ByteArray, saveRootPath: String, saveYUVDir: String)
+
+
+    external fun decodeAudioData2PCM(byteArray: ByteArray, saveRootPath: String, saveYUVDir: String)
+
+
+    external fun openNativeCamera(saveYUVDir: String)
 }

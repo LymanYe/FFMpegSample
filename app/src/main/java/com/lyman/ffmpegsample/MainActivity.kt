@@ -1,5 +1,6 @@
 package com.lyman.ffmpegsample
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -7,6 +8,7 @@ import com.lyman.ffmpegsample.fragment.BaseFragment
 import com.lyman.ffmpegsample.fragment.MainFragment
 import com.lyman.ffmpegsample.fragment.basicdatatype.*
 import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvcodecFragment
+import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvdeviceFragment
 import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegFragment
 
 class MainActivity : AppCompatActivity() {
@@ -18,7 +20,20 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun showFragment(fragment: BaseFragment, tag: String) {
-        supportFragmentManager.beginTransaction().replace(R.id.content, fragment, tag).addToBackStack(null).commit()
+        if(fragment != null)
+            supportFragmentManager.beginTransaction().replace(R.id.content, fragment, tag).addToBackStack(null).commit()
+
+    }
+
+
+    fun showFragment(type: BaseFragment.DATA_TYPE, tag: String) {
+        var fragment: Fragment? = null
+        when(type){
+            BaseFragment.DATA_TYPE.BASIC_FFMPEG_AVDEVICE -> fragment =
+                BasicFFMpegAvdeviceFragment()
+        }
+        if(fragment != null)
+            supportFragmentManager.beginTransaction().replace(R.id.content, fragment, tag).addToBackStack(null).commit()
     }
 
 
@@ -50,5 +65,18 @@ class MainActivity : AppCompatActivity() {
             finish()
         else
             supportFragmentManager.popBackStack()
+    }
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        var fragment: Fragment? = supportFragmentManager.findFragmentByTag(BasicFFMpegAvdeviceFragment.NAME_TAG)
+        if(fragment != null)
+            fragment.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        else
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 }

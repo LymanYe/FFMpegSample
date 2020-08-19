@@ -23,7 +23,7 @@ class BasicFFMpegFragment: BaseFragment() {
         list = listOf(
             DATA_TYPE.BASIC_FFMPEG_INTEGRATED,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC,
-            DATA_TYPE.BASIC_FFMPEG_AVDEVICE,
+            //DATA_TYPE.BASIC_FFMPEG_AVDEVICE,/*Not implement*/
             DATA_TYPE.BASIC_FFMPEG_AVFILTER,
             DATA_TYPE.BASIC_FFMPEG_AVFORMAT,
             DATA_TYPE.BASIC_FFMPEG_AVUTIL,
@@ -48,6 +48,9 @@ class BasicFFMpegFragment: BaseFragment() {
             }
             DATA_TYPE.BASIC_FFMPEG_AVCODEC-> {
                 showFragment(DATA_TYPE.BASIC_FFMPEG_AVCODEC)
+            }
+            DATA_TYPE.BASIC_FFMPEG_AVDEVICE-> {
+                showFragment(DATA_TYPE.BASIC_FFMPEG_AVDEVICE, BasicFFMpegAvdeviceFragment.NAME_TAG)
             }
             else -> super.onItemClick(view, position)
         }
