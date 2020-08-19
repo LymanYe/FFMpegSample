@@ -8,9 +8,9 @@ extern "C" {
 
 #include <jni.h>
 #include <stdio.h>
-#include "include/libavcodec/avcodec.h"
-#include "include/libavutil/log.h"
-#include "include/libavdevice/avdevice.h"
+#include "../ffmpeg/libavcodec/avcodec.h"
+#include "../ffmpeg/libavutil/log.h"
+#include "../ffmpeg/libavdevice/avdevice.h"
 
 #include <sys/stat.h>
 
