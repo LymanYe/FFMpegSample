@@ -6,8 +6,8 @@ set(ROOT_SRC_DIR ${PROJECT_SOURCE_DIR}/src/main/cpp)
 set(BASE ${ROOT_SRC_DIR}/base)
 set(JNI_LIBS "${CMAKE_SOURCE_DIR}/src/main/jniLibs")
 set(FFMPEG_INC ${ROOT_SRC_DIR}/ffmpeg)
-set(BASIC_DATA_TYPE_SRC ${ROOT_SRC_DIR}/basicdatatype)
-set(BASIC_FFMPEG_SRC ${ROOT_SRC_DIR}/basicffmpeg)
+set(BASIC_DATA_TYPE_SRC ${ROOT_SRC_DIR}/basicdatatype/)
+set(BASIC_FFMPEG_SRC ${ROOT_SRC_DIR}/basicffmpeg/)
 
 
 #設置自定義lib輸出位置

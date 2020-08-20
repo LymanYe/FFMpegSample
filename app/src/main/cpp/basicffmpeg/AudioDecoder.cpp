@@ -4,13 +4,13 @@
 
 #include "AudioDecoder.h"
 
-AudioDecoder::AudioDecoder(char *inputpath, char *outputpath) {
+AudioDecoder::AudioDecoder(char *inputpath, char *outputpath, AVCodecID avCodecId) {
     this->inputfilename = inputpath;
     this->outfilename = outputpath;
 
     pkt = av_packet_alloc();
 
-    codec = avcodec_find_decoder(AV_CODEC_ID_MP3);
+    codec = avcodec_find_decoder(avCodecId);
     if (!codec) {
         LOGE(AUDIO_DECODER_TAG, "AudioDecoder, Codec not found\n");
         return;
@@ -80,7 +80,7 @@ AudioDecoder::~AudioDecoder() {
 }
 
 
-void AudioDecoder::decodeAAC2PCM() {
+void AudioDecoder::decodeAudio2PCM() {
     data      = inbuf;
     data_size = fread(inbuf, 1, AUDIO_INBUF_SIZE, inputfile);
 
@@ -115,6 +115,11 @@ void AudioDecoder::decodeAAC2PCM() {
                 data_size += len;
         }
     }
+
+    /* flush the decoder */
+    pkt->data = NULL;
+    pkt->size = 0;
+    decodeAudio(c, pkt, decoded_frame, outfile);
 
     destroy();
 }
@@ -156,7 +161,7 @@ void convertAV_SAMPLE_FMT_FLTP_TO_S16P(AVFrame *audioFrame, FILE* file){
 void AudioDecoder::decodeAudio(AVCodecContext *dec_ctx, AVPacket *pkt, AVFrame *frame, FILE *outfile)
 {
     int ret, data_size;
-
+    int i, ch;
     /* send the packet with the compressed data to the decoder */
     ret = avcodec_send_packet(dec_ctx, pkt);
     if (ret < 0) {
@@ -183,10 +188,14 @@ void AudioDecoder::decodeAudio(AVCodecContext *dec_ctx, AVPacket *pkt, AVFrame *
         LOGD(AUDIO_DECODER_TAG, "decodeAudio, nb_samples: %d, channels: %d, sample_rate: %d, data_size: %d, sample_fmt: %d, AV_SAMPLE_FMT_S16: %d, sample_fmt == AV_SAMPLE_FMT_S16 -> %d", frame->nb_samples,
              dec_ctx->channels, dec_ctx->sample_rate, data_size, dec_ctx->sample_fmt, AV_SAMPLE_FMT_S16, dec_ctx->sample_fmt == AV_SAMPLE_FMT_S16);
 
+        // 按照AV_SAMPLE_FMT_FLTP 32位存储
+        for (i = 0; i < frame->nb_samples; i++)
+            for (ch = 0; ch < dec_ctx->channels; ch++)
+                fwrite(frame->data[ch] + data_size*i, 1, data_size, outfile);
         // FFMpeg默认使用AV_SAMPLE_FMT_FLTP解码采样并输出planer格式的数据，所以我们做下面的转换
         // 知识点参考：https://blog.csdn.net/shaosunrise/article/details/76571969
         // 使用命令：ffmpeg -f s16le -ar 41400 -ac 2 -i output.pcm output.aac看我们解出来的pcm编码后能不能播放（s16le对应S16P采样，也可以使用FLTP采样保存但是注意编码aac时候的格式）
-        convertAV_SAMPLE_FMT_FLTP_TO_S16P(frame, outfile);
+        //convertAV_SAMPLE_FMT_FLTP_TO_S16P(frame, outfile);
     }
 }
 

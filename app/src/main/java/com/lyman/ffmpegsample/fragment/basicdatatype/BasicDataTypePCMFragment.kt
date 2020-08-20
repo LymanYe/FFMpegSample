@@ -41,7 +41,7 @@ class BasicDataTypePCMFragment: BaseFragment() {
         var type = mRecyclerAdapter.getItem(position)
         when(type){
             DATA_TYPE.BASIC_DATA_PCM_SPLIT_16LE -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("out.pcm")
+                var bArrays: ByteArray? = readAssetsFileToByteArray("s16le.pcm")
                 var rootPath = File(SPLIT_PCM_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()
@@ -51,7 +51,7 @@ class BasicDataTypePCMFragment: BaseFragment() {
                 }
             }
             DATA_TYPE.BASIC_DATA_PCM_HALF_VOLUME_LEFT -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("out.pcm")
+                var bArrays: ByteArray? = readAssetsFileToByteArray("s16le.pcm")
                 var rootPath = File(SPLIT_PCM_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()
@@ -61,7 +61,7 @@ class BasicDataTypePCMFragment: BaseFragment() {
                 }
             }
             DATA_TYPE.BASIC_DATA_PCM_TO_WAVE -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("out.pcm")
+                var bArrays: ByteArray? = readAssetsFileToByteArray("s16le.pcm")
                 var rootPath = File(SPLIT_PCM_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()

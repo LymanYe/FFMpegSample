@@ -10,7 +10,6 @@
 extern "C" {
 #include "../ffmpeg/libavcodec/avcodec.h"
 #include "../ffmpeg/libavutil/log.h"
-#include "../ffmpeg/libavdevice/avdevice.h"
 #include "../ffmpeg/libavutil/frame.h"
 };
 
@@ -33,9 +32,9 @@ private:
     AVFrame *decoded_frame = NULL;
 
 public:
-    AudioDecoder(char* inputpath, char* outputpath);
+    AudioDecoder(char* inputpath, char* outputpath, AVCodecID avCodecId);
     virtual ~AudioDecoder();
-    virtual void decodeAAC2PCM();
+    virtual void decodeAudio2PCM();
     virtual void decodeAudio(AVCodecContext *dec_ctx, AVPacket *pkt, AVFrame *frame, FILE *outfile);
     virtual void destroy();
 };
