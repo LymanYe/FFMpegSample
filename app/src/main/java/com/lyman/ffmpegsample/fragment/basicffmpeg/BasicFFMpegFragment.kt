@@ -43,14 +43,14 @@ class BasicFFMpegFragment: BaseFragment() {
                 var version = mBasicFFMpegJNI.getConfiguration()
                 showToast("configuration is : $version")
             }
-            DATA_TYPE.BASIC_FFMPEG_AVCODEC -> {
-                showFragment(DATA_TYPE.BASIC_FFMPEG_AVCODEC)
-            }
             DATA_TYPE.BASIC_FFMPEG_AVCODEC-> {
                 showFragment(DATA_TYPE.BASIC_FFMPEG_AVCODEC)
             }
             DATA_TYPE.BASIC_FFMPEG_AVDEVICE-> {
                 showFragment(DATA_TYPE.BASIC_FFMPEG_AVDEVICE, BasicFFMpegAvdeviceFragment.NAME_TAG)
+            }
+            DATA_TYPE.BASIC_FFMPEG_AVFILTER-> {
+                showFragment(DATA_TYPE.BASIC_FFMPEG_AVFILTER)
             }
             else -> super.onItemClick(view, position)
         }

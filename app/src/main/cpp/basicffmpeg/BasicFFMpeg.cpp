@@ -5,6 +5,8 @@
 #include "AudioDecoder.h"
 #include "VideoDecoder.h"
 #include "AudioEncoder.h"
+#include "AudioFilter.h"
+#include "VideoFilter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,67 +67,6 @@ JNIEXPORT jstring JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_
     return env->NewStringUTF(info);
 }
 
-
-void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
-                     char *filename)
-{
-    FILE *f;
-    int i;
-
-    f = fopen(filename,"w");
-    //fprintf(f, "P5\n%d %d\n%d\n", xsize, ysize, 255);
-    for (i = 0; i < ysize; i++)
-        fwrite(buf + i * wrap, 1, xsize, f);
-    fclose(f);
-}
-
-void yuv_save(AVFrame* frame, char *filename)
-{
-    FILE *f;
-    int y;
-
-    f = fopen(filename,"w");
-    for (y = 0; y < frame->height; y++)
-        fwrite(&frame->data[0][y * frame->linesize[0]], 1, frame->width, f);
-    for (y = 0; y < frame->height / 2; y++)
-        fwrite(&frame->data[1][y * frame->linesize[1]], 1, frame->width / 2, f);
-    for (y = 0; y < frame->height / 2; y++)
-        fwrite(&frame->data[2][y * frame->linesize[2]], 1, frame->width / 2, f);
-
-    fclose(f);
-}
-
-
-void decodeVideo(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt,
-                   const char *filename)
-{
-    char buf[1024];
-    int ret;
-
-    ret = avcodec_send_packet(dec_ctx, pkt);
-    if (ret < 0) {
-        LOGE(TAG, "decode, Error sending a packet for decoding\n");
-        return;
-    }
-
-    while (ret >= 0) {
-        ret = avcodec_receive_frame(dec_ctx, frame);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-            return;
-        else if (ret < 0) {
-            LOGE(TAG, "decode, Error during decoding\n");
-            return;
-        }
-
-
-        /* the picture is allocated by the decoder. no need to
-           free it */
-        snprintf(buf, sizeof(buf), "%s-%d", filename, dec_ctx->frame_number);
-//        pgm_save(frame->data[0], frame->linesize[0],
-//                 frame->width, frame->height, buf);
-        yuv_save(frame, buf);
-    }
-}
 
 // decode h264 to yuv420p
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_decodeVideoData2YUV420P
@@ -228,6 +169,64 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
 
     AudioEncoder *audioEncoder = new AudioEncoder(input_pcm_file_path, aac_full_name, AV_CODEC_ID_AAC);
     audioEncoder->encodePCM2AAC();
+}
+
+
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_basicFilterPCMData
+        (JNIEnv *env, jobject js, jint duration) {
+    AudioFilter *audioFilter = new AudioFilter();
+    audioFilter->initSinWavePCMData(20);
+    audioFilter->filterSinWavePCMData();
+}
+
+
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_decodeAudioAndFillFilter
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath) {
+    jbyte *mp4_array = jbyteArray2cbyte(env, byteArray);
+    unsigned char *mp4_buffer = (unsigned char *)mp4_array;
+    int mp4_length = env->GetArrayLength(byteArray);
+    char *root_path = jstring2cchar(env, rootOutputPath);
+    char mp4_full_name[150];
+    sprintf(mp4_full_name, "%s%s", root_path, "/output.mp4");
+    // save file
+    FILE *input_mp4_file;
+    if((input_mp4_file = fopen(mp4_full_name,"wb")) == NULL){
+        LOGE(TAG, "decodeAudioAndFillFilter, failed to create output mp4 file path");
+        return;
+    }
+    fwrite(mp4_buffer, 1, mp4_length, input_mp4_file);
+    fclose(input_mp4_file);
+
+    AudioFilter *audioFilter = new AudioFilter();
+    audioFilter->decodeAudioAndInitFilter(mp4_full_name);
+    audioFilter->sendPCM2Filter();
+}
+
+
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_yuv420PAndFilter
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jint width, jint height, jstring rootOutputPath) {
+    jbyte *yuv_array = jbyteArray2cbyte(env, byteArray);
+    unsigned char *yuv_buffer = (unsigned char *)yuv_array;
+    int yuv_length = env->GetArrayLength(byteArray);
+    char *root_path = jstring2cchar(env, rootOutputPath);
+    char input_yuv_path[150];
+    sprintf(input_yuv_path, "%s%s", root_path, "/input.yuv");
+    char output_yuv_path[150];
+    sprintf(output_yuv_path, "%s%s", root_path, "/output.yuv");
+    // save file
+    FILE *input_yuv_file;
+    if((input_yuv_file = fopen(input_yuv_path,"wb")) == NULL){
+        LOGE(TAG, "yuv420PAndFilter, failed to create output yuv file path");
+        return;
+    }
+    fwrite(yuv_buffer, 1, yuv_length, input_yuv_file);
+    fclose(input_yuv_file);
+
+    VideoFilter *videoFilter = new VideoFilter();
+    videoFilter->initSingleYUVFile(input_yuv_path, output_yuv_path, width, height);
+    videoFilter->initFilter();
+    videoFilter->filterFrame();
+
 }
 
 

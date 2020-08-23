@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import com.lyman.ffmpegsample.fragment.BaseFragment
 import com.lyman.ffmpegsample.fragment.MainFragment
 import com.lyman.ffmpegsample.fragment.basicdatatype.*
+import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvFilterFragment
 import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvcodecFragment
 import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvdeviceFragment
 import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegFragment
@@ -54,6 +55,8 @@ class MainActivity : AppCompatActivity() {
                 BasicFFMpegFragment()
             BaseFragment.DATA_TYPE.BASIC_FFMPEG_AVCODEC -> fragment =
                 BasicFFMpegAvcodecFragment()
+            BaseFragment.DATA_TYPE.BASIC_FFMPEG_AVFILTER -> fragment =
+                BasicFFMpegAvFilterFragment()
         }
         if(fragment != null)
             supportFragmentManager.beginTransaction().replace(R.id.content, fragment).addToBackStack(null).commit()
