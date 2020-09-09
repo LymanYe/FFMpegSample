@@ -99,7 +99,7 @@ static int init_filter_graph(AVFilterGraph **graph, AVFilterContext **src,
     /* A third way of passing the options is in a string of the form
      * key1=value1:key2=value2.... */
     snprintf(reinterpret_cast<char *>(options_str), sizeof(options_str),
-             "sample_fmts=%s:sample_rates=%d:channel_layouts=0x%"PRIx64,
+             "sample_fmts=%s:sample_rates=%d:channel_layouts=0x%" PRIx64,
              av_get_sample_fmt_name(AV_SAMPLE_FMT_S16), 44100,
              (uint64_t)AV_CH_LAYOUT_STEREO);
     err = avfilter_init_str(aformat_ctx, reinterpret_cast<const char *>(options_str));
@@ -352,7 +352,7 @@ int AudioFilter::init_filters(const char *filters_descr)
     if (!dec_ctx->channel_layout)
         dec_ctx->channel_layout = av_get_default_channel_layout(dec_ctx->channels);
     snprintf(args, sizeof(args),
-             "time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=0x%"PRIx64,
+             "time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=0x%" PRIx64,
              time_base.num, time_base.den, dec_ctx->sample_rate,
              av_get_sample_fmt_name(dec_ctx->sample_fmt), dec_ctx->channel_layout);
     ret = avfilter_graph_create_filter(&buffersrc_ctx, abuffersrc, "in",

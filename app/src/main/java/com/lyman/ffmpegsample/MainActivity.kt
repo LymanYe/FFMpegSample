@@ -1,7 +1,7 @@
 package com.lyman.ffmpegsample
 
-import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.lyman.ffmpegsample.fragment.BaseFragment
@@ -13,6 +13,9 @@ import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvdeviceFragment
 import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegFragment
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        var TAG: String = "MainActivity"
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -81,5 +84,35 @@ class MainActivity : AppCompatActivity() {
             fragment.onRequestPermissionsResult(requestCode, permissions, grantResults)
         else
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume")
+    }
+
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause")
+    }
+
+
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart")
+    }
+
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop")
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy")
     }
 }

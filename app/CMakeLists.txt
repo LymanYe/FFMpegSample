@@ -39,6 +39,7 @@ find_library(
         # you want CMake to locate.
         log )
 
+#file(GLOB native_srcs "src/main/cpp/basicffmpeg/*.cpp")
 #添加libbasicffmpeg.so庫
 add_library(
         # Sets the name of the library.

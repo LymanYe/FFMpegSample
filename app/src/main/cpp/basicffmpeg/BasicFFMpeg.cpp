@@ -172,6 +172,32 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
 }
 
 
+// encode yuv420p to h264
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encodeYUV420PData2H264
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath, jstring yuvDir) {
+    jbyte *yuv_array = jbyteArray2cbyte(env, byteArray);
+    unsigned char *yuv_buffer = (unsigned char *)yuv_array;
+    int yuv_length = env->GetArrayLength(byteArray);
+    char *root_path = jstring2cchar(env, rootOutputPath);
+    char *save_h264_dir = jstring2cchar(env, yuvDir);
+    char h264_full_name[150];
+    sprintf(h264_full_name, "%s%s", save_h264_dir, "/output.h264");
+    // save file
+    FILE *input_h264_file;
+    char input_h264_file_path[120] = {0};
+    sprintf(input_h264_file_path, "%s%s", root_path, "/input.yuv");
+    if((input_h264_file = fopen(input_h264_file_path,"wb")) == NULL){
+        LOGE(TAG, "encodeYUV420PData2H264, failed to create output h264 file path");
+        return;
+    }
+    fwrite(yuv_buffer, 1, yuv_length, input_h264_file);
+    fclose(input_h264_file);
+
+    AudioEncoder *audioEncoder = new AudioEncoder(input_h264_file_path, h264_full_name, AV_CODEC_ID_AAC);
+    audioEncoder->encodePCM2AAC();
+}
+
+
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_basicFilterPCMData
         (JNIEnv *env, jobject js, jint duration) {
     AudioFilter *audioFilter = new AudioFilter();

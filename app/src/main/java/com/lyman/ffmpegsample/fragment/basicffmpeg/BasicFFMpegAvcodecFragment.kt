@@ -97,7 +97,7 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
                 }
             }
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_YUV420P2H264 -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("output.yuv")
+                var bArrays: ByteArray? = readAssetsFileToByteArray("pic.yuv")
                 var rootPath = File(AVCODEC_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()
