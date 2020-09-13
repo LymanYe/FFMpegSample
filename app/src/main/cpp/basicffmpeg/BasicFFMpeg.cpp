@@ -161,14 +161,56 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
     char input_pcm_file_path[120] = {0};
     sprintf(input_pcm_file_path, "%s%s", root_path, "/input.pcm");
     if((input_audio_file = fopen(input_pcm_file_path,"wb")) == NULL){
-        LOGE(TAG, "decodeAudioData2PCM, failed to create output aac file path");
+        LOGE(TAG, "encodePCMData2AAC, failed to create output aac file path");
         return;
     }
     fwrite(audio_buffer, 1, pcm_length, input_audio_file);
     fclose(input_audio_file);
 
-    AudioEncoder *audioEncoder = new AudioEncoder(input_pcm_file_path, aac_full_name, AV_CODEC_ID_AAC);
+    LOGD(TAG, "encodePCMData2AAC");
+    AudioEncoder *audioEncoder = new AudioEncoder(input_pcm_file_path, aac_full_name, AV_CODEC_ID_AAC, 64000, AV_SAMPLE_FMT_FLTP);
     audioEncoder->encodePCM2AAC();
+}
+
+
+// encode pcm s16le to AAC
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encodePCMData2MP3
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath, jstring aacDir) {
+    jbyte *pcm_array = jbyteArray2cbyte(env, byteArray);
+    unsigned char *audio_buffer = (unsigned char *)pcm_array;
+    int pcm_length = env->GetArrayLength(byteArray);
+    char *root_path = jstring2cchar(env, rootOutputPath);
+    char *save_aac_dir = jstring2cchar(env, aacDir);
+    char mp3_full_name[150];
+    sprintf(mp3_full_name, "%s%s", save_aac_dir, "/encoded_output.mp3");
+    // save file
+    FILE *input_audio_file;
+    char input_pcm_file_path[120] = {0};
+    sprintf(input_pcm_file_path, "%s%s", root_path, "/input.pcm");
+    if((input_audio_file = fopen(input_pcm_file_path,"wb")) == NULL){
+        LOGE(TAG, "encodePCMData2MP3, failed to create output mp3 file path");
+        return;
+    }
+    fwrite(audio_buffer, 1, pcm_length, input_audio_file);
+    fclose(input_audio_file);
+
+    LOGD(TAG, "encodePCMData2MP3");
+    AudioEncoder *audioEncoder = new AudioEncoder(input_pcm_file_path, mp3_full_name, AV_CODEC_ID_MP3, 64000, AV_SAMPLE_FMT_FLTP);
+    audioEncoder->encodePCM2MP3();
+}
+
+
+// encode pcm s16le single tone to MP2
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encodeS16leSingleToneData2MP2
+        (JNIEnv *env, jobject js, jstring rootDir) {
+    LOGE(TAG, "encodeS16leSingleToneData2MP2");
+    char *save_mp2_dir = jstring2cchar(env, rootDir);
+    char mp2_full_name[150];
+    sprintf(mp2_full_name, "%s%s", save_mp2_dir, "/encoded_output.mp2");
+
+
+    AudioEncoder *audioEncoder = new AudioEncoder(NULL, mp2_full_name, AV_CODEC_ID_MP2, 64000, AV_SAMPLE_FMT_S16);
+    audioEncoder->encodeSingleToneSound();
 }
 
 
@@ -193,8 +235,8 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
     fwrite(yuv_buffer, 1, yuv_length, input_h264_file);
     fclose(input_h264_file);
 
-    AudioEncoder *audioEncoder = new AudioEncoder(input_h264_file_path, h264_full_name, AV_CODEC_ID_AAC);
-    audioEncoder->encodePCM2AAC();
+//    AudioEncoder *audioEncoder = new AudioEncoder(input_h264_file_path, h264_full_name, AV_CODEC_ID_AAC);
+//    audioEncoder->encodePCM2AAC();
 }
 
 

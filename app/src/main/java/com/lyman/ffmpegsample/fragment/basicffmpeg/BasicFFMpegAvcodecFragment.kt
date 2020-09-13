@@ -31,6 +31,7 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_AAC,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_MP3,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_YUV420P2H264,
+            DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM16_SINGLE_TONE2MP2,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM2AAC,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM2MP3
         )
@@ -114,6 +115,18 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
                     }).start()
                 }
             }
+            DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM16_SINGLE_TONE2MP2 -> {
+                var pcmDir = File(AVCODEC_ROOT_PATH + File.separator + "encode_pcm")
+                if(!pcmDir.exists())
+                    pcmDir.mkdirs()
+                Thread( Runnable {
+                    mBasicFFMpegJNI.encodeS16leSingleToneData2MP2(pcmDir.absolutePath)
+                    activity?.runOnUiThread {
+                        showToast("File save to $pcmDir")
+                    }
+
+                }).start()
+            }
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM2AAC -> {
                 var bArrays: ByteArray? = readAssetsFileToByteArray("fltp.pcm")
                 var rootPath = File(AVCODEC_ROOT_PATH)
@@ -133,7 +146,8 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
                 }
             }
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM2MP3 -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("output.pcm")
+                // 传入的是fltp还是s16le采样的pcm要做区分设置不同的采样格式
+                var bArrays: ByteArray? = readAssetsFileToByteArray("fltp.pcm")
                 var rootPath = File(AVCODEC_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()

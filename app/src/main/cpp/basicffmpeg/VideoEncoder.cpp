@@ -10,19 +10,19 @@ VideoEncoder::VideoEncoder(char *inputfilepath, char *codecname) {
     /* find the mpeg1video encoder */
     codec = avcodec_find_encoder_by_name(codec_name);
     if (!codec) {
-        fprintf(stderr, "Codec '%s' not found\n", codec_name);
-        exit(1);
+        LOGE(VIDEO_ENCODE_TAG, "Codec '%s' not found\n", codec_name);
+        return ;
     }
 
     c = avcodec_alloc_context3(codec);
     if (!c) {
-        fprintf(stderr, "Could not allocate video codec context\n");
-        exit(1);
+        LOGE(VIDEO_ENCODE_TAG, "Could not allocate video codec context\n");
+        return ;
     }
 
     pkt = av_packet_alloc();
     if (!pkt)
-        exit(1);
+        return ;
 
     /* put sample parameters */
     c->bit_rate = 400000;
@@ -49,20 +49,20 @@ VideoEncoder::VideoEncoder(char *inputfilepath, char *codecname) {
     /* open it */
     ret = avcodec_open2(c, codec, NULL);
     if (ret < 0) {
-        fprintf(stderr, "Could not open codec: %s\n", av_err2str(ret));
-        exit(1);
+        LOGE(VIDEO_ENCODE_TAG, "Could not open codec: %s\n", av_err2str(ret));
+        return ;
     }
 
     f = fopen(filename, "wb");
     if (!f) {
-        fprintf(stderr, "Could not open %s\n", filename);
-        exit(1);
+        LOGE(VIDEO_ENCODE_TAG, "Could not open %s\n", filename);
+        return ;
     }
 
     frame = av_frame_alloc();
     if (!frame) {
-        fprintf(stderr, "Could not allocate video frame\n");
-        exit(1);
+        LOGE(VIDEO_ENCODE_TAG, "Could not allocate video frame\n");
+        return ;
     }
     frame->format = c->pix_fmt;
     frame->width  = c->width;
@@ -70,8 +70,8 @@ VideoEncoder::VideoEncoder(char *inputfilepath, char *codecname) {
 
     ret = av_frame_get_buffer(frame, 32);
     if (ret < 0) {
-        fprintf(stderr, "Could not allocate the video frame data\n");
-        exit(1);
+        LOGE(VIDEO_ENCODE_TAG, "Could not allocate the video frame data\n");
+        return ;
     }
 }
 
@@ -83,12 +83,12 @@ void VideoEncoder::encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt
 
     /* send the frame to the encoder */
     if (frame)
-        printf("Send frame %3" PRId64"\n", frame->pts);
+        LOGE(VIDEO_ENCODE_TAG, "Send frame %3" PRId64"\n", frame->pts);
 
     ret = avcodec_send_frame(enc_ctx, frame);
     if (ret < 0) {
-        fprintf(stderr, "Error sending a frame for encoding\n");
-        exit(1);
+        LOGE(VIDEO_ENCODE_TAG, "Error sending a frame for encoding\n");
+        return;
     }
 
     while (ret >= 0) {
@@ -96,11 +96,11 @@ void VideoEncoder::encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             return;
         else if (ret < 0) {
-            fprintf(stderr, "Error during encoding\n");
-            exit(1);
+            LOGE(VIDEO_ENCODE_TAG, "Error during encoding\n");
+            return;
         }
 
-        printf("Write packet %3" PRId64" (size=%5d)\n", pkt->pts, pkt->size);
+        LOGD(VIDEO_ENCODE_TAG, "Write packet %3" PRId64" (size=%5d)\n", pkt->pts, pkt->size);
         fwrite(pkt->data, 1, pkt->size, outfile);
         av_packet_unref(pkt);
     }

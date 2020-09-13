@@ -23,6 +23,9 @@ class BasicFFMpegJNI {
     external fun decodeAACData2PCM(byteArray: ByteArray, saveRootPath: String, savePCMDir: String)
 
 
+    external fun encodeS16leSingleToneData2MP2(saveRootPath: String)
+
+
     external fun encodePCMData2AAC(byteArray: ByteArray, saveRootPath: String, savePCMDir: String)
 
 

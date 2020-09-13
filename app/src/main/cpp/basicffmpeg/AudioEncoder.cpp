@@ -58,11 +58,11 @@ int select_channel_layout(const AVCodec *codec)
     return best_ch_layout;
 }
 
-AudioEncoder::AudioEncoder(char *inputpath, char *outputpath, AVCodecID avCodecId) {
-    this->filename = inputpath;
+AudioEncoder::AudioEncoder(char *inputpath, char *outputpath, AVCodecID avCodecId, int bitRate, AVSampleFormat sampleFmt) {
+    this->filename = outputpath;
     codec = avcodec_find_encoder(avCodecId);
     if (!codec) {
-        LOGE(AUDIO_ENCODER_TAG, "AudioEncoder, Codec not found\n");
+        LOGE(AUDIO_ENCODER_TAG, "AudioEncoder, Codec not found codeId: %d\n" , avCodecId);
         return;
     }
 
@@ -73,10 +73,10 @@ AudioEncoder::AudioEncoder(char *inputpath, char *outputpath, AVCodecID avCodecI
     }
 
     /* put sample parameters */
-    c->bit_rate = 41400;
+    c->bit_rate = bitRate;
 
-    /* check that the encoder supports fltp pcm input */
-    c->sample_fmt = AV_SAMPLE_FMT_FLTP;
+    /* check that the encoder supports  pcm input */
+    c->sample_fmt = sampleFmt;
     if (!check_sample_fmt(codec, c->sample_fmt)) {
         LOGE(AUDIO_ENCODER_TAG, "AudioEncoder, Encoder does not support sample format %s",
                 av_get_sample_fmt_name(c->sample_fmt));
@@ -88,17 +88,15 @@ AudioEncoder::AudioEncoder(char *inputpath, char *outputpath, AVCodecID avCodecI
     c->channel_layout = select_channel_layout(codec);
     c->channels       = av_get_channel_layout_nb_channels(c->channel_layout);
 
+    /* Allow the use of the experimental AAC or MP3 encoder. */
+    c->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
+
     /* open it */
     if (avcodec_open2(c, codec, NULL) < 0) {
         LOGE(AUDIO_ENCODER_TAG, "AudioEncoder, Could not open codec\n");
         return ;
     }
 
-    outputfile = fopen(filename, "wb");
-    if (!outputfile) {
-        LOGE(AUDIO_ENCODER_TAG, "AudioEncoder, Could not open %s\n", filename);
-        return ;
-    }
 
     /* packet for holding encoded output */
     pkt = av_packet_alloc();
@@ -124,6 +122,25 @@ AudioEncoder::AudioEncoder(char *inputpath, char *outputpath, AVCodecID avCodecI
         LOGE(AUDIO_ENCODER_TAG, "AudioEncoder, Could not allocate audio data buffers\n");
         return ;
     }
+
+    outputfile = fopen(outputpath, "wb");
+    if (!outputfile) {
+        LOGE(AUDIO_ENCODER_TAG, "AudioEncoder, Could not open %s\n", filename);
+        return ;
+    }
+
+    if(inputpath != NULL) {
+        inputfile = fopen(inputpath, "rb");
+        if(!inputfile) {
+            LOGE(AUDIO_ENCODER_TAG, "AudioEncoder, Could not open %s\n", inputpath);
+            return ;
+        }
+    }
+
+    if(avCodecId == AV_CODEC_ID_AAC) {
+        formatContext = avformat_alloc_context();
+        formatContext->oformat = av_guess_format(NULL, outputpath, NULL);
+    }
 }
 
 
@@ -136,10 +153,117 @@ AudioEncoder::~AudioEncoder() {
 
 
 void AudioEncoder::encodePCM2AAC() {
+    LOGD(AUDIO_ENCODER_TAG,  "encodePCM2AAC");
+
+    //Write Header
+    //avformat_write_header(formatContext, NULL);
+
+
+    int data_size;
+    // sample_fmt = AV_SAMPLE_FMT_FLTP
+    if(c->sample_fmt == AV_SAMPLE_FMT_FLTP) {
+        data_size = av_get_bytes_per_sample(c->sample_fmt);
+        while (feof(inputfile) == 0) {
+            int i = 0, ch = 0;
+
+            if ((ret = av_frame_make_writable(frame)) < 0)
+            {
+                LOGE(AUDIO_ENCODER_TAG,  "encodePCM2AAC, frame is not writable.\n");
+                return;
+            }
+
+            for (i = 0; i < frame->nb_samples; i++)
+            {
+                for (ch = 0; ch < c->channels; ch++)
+                {
+                    fread(frame->data[ch] + data_size * i, 1, data_size, inputfile);
+                }
+            }
+
+            encode(c, frame, pkt, outputfile);
+        }
+    } else if(c->sample_fmt == AV_SAMPLE_FMT_S16P){
+        // sample_fmt = AV_SAMPLE_FMT_S16P
+        data_size = av_samples_get_buffer_size(NULL, c->channels, c->frame_size, c->sample_fmt, 1);
+        LOGD(AUDIO_ENCODER_TAG, "encodePCM2AAC, data_size = %d\n", data_size);
+        while (feof(inputfile) == 0)
+        {
+            if ((ret = av_frame_make_writable(frame)) < 0)
+            {
+                LOGE(AUDIO_ENCODER_TAG,  "encodePCM2AAC, frame is not writable.\n");
+                return;
+            }
+
+            fread(frame->data[0], 1, data_size, inputfile);
+            encode(c, frame, pkt, outputfile);
+        }
+    }
+
+    /* flush the encoder */
+    encode(c, NULL, pkt, outputfile);
+
+    //Write Trailer
+    //av_write_trailer(formatContext);
+
+    destroy();
+}
+
+
+void AudioEncoder::encodePCM2MP3() {
+    LOGD(AUDIO_ENCODER_TAG,  "encodePCM2MP3");
+    int data_size;
+    // sample_fmt = AV_SAMPLE_FMT_FLTP
+    if(c->sample_fmt == AV_SAMPLE_FMT_FLTP) {
+        data_size = av_get_bytes_per_sample(c->sample_fmt);
+        while (feof(inputfile) == 0) {
+            int i = 0, ch = 0;
+
+            if ((ret = av_frame_make_writable(frame)) < 0)
+            {
+                LOGE(AUDIO_ENCODER_TAG,  "encodePCM2MP3, frame is not writable.\n");
+                return;
+            }
+
+            for (i = 0; i < frame->nb_samples; i++)
+            {
+                for (ch = 0; ch < c->channels; ch++)
+                {
+                    fread(frame->data[ch] + data_size * i, 1, data_size, inputfile);
+                }
+            }
+
+            encode(c, frame, pkt, outputfile);
+        }
+    } else if(c->sample_fmt == AV_SAMPLE_FMT_S16P){
+        // sample_fmt = AV_SAMPLE_FMT_S16P
+        data_size = av_samples_get_buffer_size(NULL, c->channels, c->frame_size, c->sample_fmt, 1);
+        LOGD(AUDIO_ENCODER_TAG, "encodePCM2MP3, data_size = %d\n", data_size);
+        while (feof(inputfile) == 0)
+        {
+            if ((ret = av_frame_make_writable(frame)) < 0)
+            {
+                LOGE(AUDIO_ENCODER_TAG,  "encodePCM2MP3, frame is not writable.\n");
+                return;
+            }
+
+            fread(frame->data[0], 1, data_size, inputfile);
+            encode(c, frame, pkt, outputfile);
+        }
+    }
+
+
+    /* flush the encoder */
+    encode(c, NULL, pkt, outputfile);
+
+    destroy();
+}
+
+
+void AudioEncoder::encodeSingleToneSound() {
 /* encode a single tone sound */
     t = 0;
     tincr = 2 * M_PI * 440.0 / c->sample_rate;
-    for (i = 0; i < 200; i++) {
+    for (i = 0; i < 400; i++) {
         /* make sure the frame is writable -- makes a copy if the encoder
          * kept a reference internally */
         ret = av_frame_make_writable(frame);
@@ -170,7 +294,7 @@ void AudioEncoder::encode(AVCodecContext *ctx, AVFrame *frame, AVPacket *pkt, FI
     /* send the frame for encoding */
     ret = avcodec_send_frame(ctx, frame);
     if (ret < 0) {
-        LOGE(AUDIO_ENCODER_TAG, "encode, Error sending the frame to the encoder\n");
+        LOGE(AUDIO_ENCODER_TAG, "encode, Error sending the frame to the encoder : %s\n", av_err2str(ret));
         return;
     }
 
@@ -181,7 +305,7 @@ void AudioEncoder::encode(AVCodecContext *ctx, AVFrame *frame, AVPacket *pkt, FI
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             return;
         else if (ret < 0) {
-            LOGE(AUDIO_ENCODER_TAG, "encode, Error encoding audio frame\n");
+            LOGE(AUDIO_ENCODER_TAG, "encode, Error encoding audio frame ret = %d \n", ret);
             return;
         }
 
