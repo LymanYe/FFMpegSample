@@ -30,6 +30,7 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_VIDEO,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_AAC,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_DECODE_MP3,
+            DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_GENERATE_YUV420P2H264,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_YUV420P2H264,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM16_SINGLE_TONE2MP2,
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM2AAC,
@@ -114,6 +115,18 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
 
                     }).start()
                 }
+            }
+            DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_GENERATE_YUV420P2H264 -> {
+                var h264Dir = File(AVCODEC_ROOT_PATH + File.separator + "encode_h264")
+                if(!h264Dir.exists())
+                    h264Dir.mkdirs()
+                Thread( Runnable {
+                    mBasicFFMpegJNI.encodeYUV420PSingleData2H264(h264Dir.absolutePath)
+                    activity?.runOnUiThread {
+                        showToast("File save to ${h264Dir.absolutePath}")
+                    }
+
+                }).start()
             }
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_PCM16_SINGLE_TONE2MP2 -> {
                 var pcmDir = File(AVCODEC_ROOT_PATH + File.separator + "encode_pcm")

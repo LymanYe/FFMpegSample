@@ -35,6 +35,9 @@ class BasicFFMpegJNI {
     external fun encodeYUV420PData2H264(byteArray: ByteArray, saveRootPath: String, savePCMDir: String)
 
 
+    external fun encodeYUV420PSingleData2H264(saveRootPath: String)
+
+
     external fun basicFilterPCMData(duration: Int)
 
 

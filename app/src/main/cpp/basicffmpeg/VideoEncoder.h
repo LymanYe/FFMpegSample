@@ -19,15 +19,15 @@ private:
     const AVCodec *codec;
     AVCodecContext *c= NULL;
     int i, ret, x, y;
-    FILE *f;
+    FILE *inputFile, *outputFile;
     AVFrame *frame;
     AVPacket *pkt;
 
 
 public:
-    VideoEncoder(char *inputfilepath, char *codecname);
+    VideoEncoder(char *inputfilepath, char *outputfilepath, AVCodecID codecId);
     ~VideoEncoder();
-    void encodeYUV2H264();
+    void encodeGenerateYUV420P2H264();
     void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt,
                 FILE *outfile);
 };

@@ -4,13 +4,12 @@
 
 #include "VideoEncoder.h"
 
-VideoEncoder::VideoEncoder(char *inputfilepath, char *codecname) {
+VideoEncoder::VideoEncoder(char *inputfilepath, char *outputfilepath, AVCodecID codecId) {
     filename = inputfilepath;
-    codec_name = codecname;
-    /* find the mpeg1video encoder */
-    codec = avcodec_find_encoder_by_name(codec_name);
+//    codec = avcodec_find_encoder_by_name(codec_name);
+    codec = avcodec_find_encoder(codecId);
     if (!codec) {
-        LOGE(VIDEO_ENCODE_TAG, "Codec '%s' not found\n", codec_name);
+        LOGE(VIDEO_ENCODE_TAG, "Codec '%d' not found\n", codecId);
         return ;
     }
 
@@ -53,11 +52,22 @@ VideoEncoder::VideoEncoder(char *inputfilepath, char *codecname) {
         return ;
     }
 
-    f = fopen(filename, "wb");
-    if (!f) {
-        LOGE(VIDEO_ENCODE_TAG, "Could not open %s\n", filename);
-        return ;
+    if(inputfilepath != NULL) {
+        inputFile = fopen(inputfilepath, "wb");
+        if (!inputFile) {
+            LOGE(VIDEO_ENCODE_TAG, "Could not open %s\n", inputfilepath);
+            return ;
+        }
     }
+
+    if(outputfilepath != NULL) {
+        outputFile = fopen(outputfilepath, "wb");
+        if (!outputFile) {
+            LOGE(VIDEO_ENCODE_TAG, "Could not open %s\n", outputfilepath);
+            return ;
+        }
+    }
+
 
     frame = av_frame_alloc();
     if (!frame) {
@@ -107,7 +117,7 @@ void VideoEncoder::encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt
 }
 
 
-void VideoEncoder::encodeYUV2H264() {
+void VideoEncoder::encodeGenerateYUV420P2H264() {
 /* encode 1 second of video */
     for (i = 0; i < 25; i++) {
         fflush(stdout);
@@ -136,16 +146,16 @@ void VideoEncoder::encodeYUV2H264() {
         frame->pts = i;
 
         /* encode the image */
-        encode(c, frame, pkt, f);
+        encode(c, frame, pkt, outputFile);
     }
 
     /* flush the encoder */
-    encode(c, NULL, pkt, f);
+    encode(c, NULL, pkt, outputFile);
 
     /* add sequence end code to have a real MPEG file */
-    uint8_t endcode[] = { 0, 0, 1, 0xb7 };
-    fwrite(endcode, 1, sizeof(endcode), f);
-    fclose(f);
+//    uint8_t endcode[] = { 0, 0, 1, 0xb7 };
+//    fwrite(endcode, 1, sizeof(endcode), outputFile);
+    fclose(outputFile);
 }
 
 

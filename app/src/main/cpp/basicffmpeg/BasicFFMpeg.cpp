@@ -7,6 +7,7 @@
 #include "AudioEncoder.h"
 #include "AudioFilter.h"
 #include "VideoFilter.h"
+#include "VideoEncoder.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -238,6 +239,20 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
 //    AudioEncoder *audioEncoder = new AudioEncoder(input_h264_file_path, h264_full_name, AV_CODEC_ID_AAC);
 //    audioEncoder->encodePCM2AAC();
 }
+
+
+// encode yuv420p to h264
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encodeYUV420PSingleData2H264
+        (JNIEnv *env, jobject js, jstring rootOutputPath) {
+    char *root_path = jstring2cchar(env, rootOutputPath);
+    char h264_full_path[150];
+    sprintf(h264_full_path, "%s%s", root_path, "/output.h264");
+
+    VideoEncoder *videoEncoder = new VideoEncoder(NULL, h264_full_path, AV_CODEC_ID_H264);
+    videoEncoder->encodeGenerateYUV420P2H264();
+
+}
+
 
 
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_basicFilterPCMData
