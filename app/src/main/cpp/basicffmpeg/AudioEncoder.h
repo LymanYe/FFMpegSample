@@ -30,8 +30,9 @@ private:
 public:
     AudioEncoder(char *inputpath, char *outputpath, AVCodecID avCodecId, int bitRate, AVSampleFormat sampleFmt);
     ~AudioEncoder();
-    void encode(AVCodecContext *ctx, AVFrame *frame, AVPacket *pkt,
-                FILE *output);
+    void encode(AVCodecContext *ctx, AVFrame *frame, AVPacket *pkt,FILE *output);
+    void encodeAAC(AVFormatContext*fmtCtx,AVCodecContext *cCtx,AVPacket *packet,AVFrame *srcFrame,FILE *file);
+
     void encodePCM2AAC();
     void encodePCM2MP3();
     void encodeSingleToneSound();

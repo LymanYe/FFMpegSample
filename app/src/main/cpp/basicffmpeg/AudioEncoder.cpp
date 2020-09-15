@@ -138,8 +138,33 @@ AudioEncoder::AudioEncoder(char *inputpath, char *outputpath, AVCodecID avCodecI
     }
 
     if(avCodecId == AV_CODEC_ID_AAC) {
-        formatContext = avformat_alloc_context();
-        formatContext->oformat = av_guess_format(NULL, outputpath, NULL);
+        /** 6、创建aac格式的封装Muxer上下文环境AVFormatContext上下文环境，对于每个封装器Muxer，它必须包括：
+     *  音频流参数信息，由AVStream表达包含的封装参数信息
+     */
+        // 根据输出文件后缀猜测AVFormatContext上下文。
+        ret = avformat_alloc_output_context2(&formatContext, NULL, NULL, outputpath);
+        if (ret < 0) {
+            LOGE(AUDIO_ENCODER_TAG, "avformat_alloc_output_context2 fail %d",ret);
+            return;
+        }
+        // 添加音频流参数信息
+        AVStream *ostream = avformat_new_stream(formatContext, NULL);
+        if (!ostream) {
+            LOGE(AUDIO_ENCODER_TAG, "avformat_new_stream fail");
+            return;
+        }
+
+        // 打开上下文用于准备写入数据
+        ret = avio_open(&formatContext->pb, outputpath, AVIO_FLAG_READ_WRITE);
+        if (ret < 0) {
+            LOGD(AUDIO_ENCODER_TAG, "avio_open fail %d",ret);
+            return;
+        }
+        /** 写入头文件信息   重要：将编码器信息拷贝到AVFormatContext的对应的AVSream流中
+         *  遇到问题：返回错误-22，提示Only AAC streams can be muxed by the ADTS muxer
+         *  解决方案：通过avcodec_parameters_from_context方法将编码器信息拷贝到输出流的AVStream中codecpar参数
+        */
+        avcodec_parameters_from_context(ostream->codecpar, c);
     }
 }
 
@@ -156,10 +181,17 @@ void AudioEncoder::encodePCM2AAC() {
     LOGD(AUDIO_ENCODER_TAG,  "encodePCM2AAC");
 
     //Write Header
-    //avformat_write_header(formatContext, NULL);
+    ret = avformat_write_header(formatContext, NULL);
+    if (ret < 0) {
+        LOGD(AUDIO_ENCODER_TAG, "avformat_write_header %d",ret);
+        return;
+    }
+
+    av_dump_format(formatContext, 0, NULL, 1);
 
 
     int data_size;
+    int ptsIndex = 0;
     // sample_fmt = AV_SAMPLE_FMT_FLTP
     if(c->sample_fmt == AV_SAMPLE_FMT_FLTP) {
         data_size = av_get_bytes_per_sample(c->sample_fmt);
@@ -180,7 +212,10 @@ void AudioEncoder::encodePCM2AAC() {
                 }
             }
 
-            encode(c, frame, pkt, outputfile);
+            frame->pts = ptsIndex;
+
+            encodeAAC(formatContext, c, pkt, frame, outputfile);
+            ptsIndex++;
         }
     } else if(c->sample_fmt == AV_SAMPLE_FMT_S16P){
         // sample_fmt = AV_SAMPLE_FMT_S16P
@@ -195,15 +230,15 @@ void AudioEncoder::encodePCM2AAC() {
             }
 
             fread(frame->data[0], 1, data_size, inputfile);
-            encode(c, frame, pkt, outputfile);
+            encodeAAC(formatContext, c, pkt, frame, outputfile);
         }
     }
 
     /* flush the encoder */
-    encode(c, NULL, pkt, outputfile);
+    encodeAAC(formatContext, c, pkt, NULL, outputfile);
 
     //Write Trailer
-    //av_write_trailer(formatContext);
+    av_write_trailer(formatContext);
 
     destroy();
 }
@@ -313,6 +348,37 @@ void AudioEncoder::encode(AVCodecContext *ctx, AVFrame *frame, AVPacket *pkt, FI
         av_packet_unref(pkt);
     }
 }
+
+
+void AudioEncoder::encodeAAC(AVFormatContext*fmtCtx,AVCodecContext *cCtx,AVPacket *packet,AVFrame *srcFrame,FILE *file)
+{
+    if (fmtCtx == NULL || cCtx == NULL || packet == NULL) {
+        return;
+    }
+
+    int ret = 0;
+    // 开始编码;对于音频编码来说，不需要设置pts的值(但是会出现警告);如果frame 为NULL，则代表将编码缓冲区中的所有剩余数据全部编码完
+    ret = avcodec_send_frame(cCtx, srcFrame);
+    while (ret >= 0) {
+        ret = avcodec_receive_packet(cCtx, packet);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) { // EAGAIN 有可能是编码器需要先缓冲一部分数据，并不是真正的编码错误
+            if (ret == AVERROR_EOF) {
+                LOGD(AUDIO_ENCODER_TAG, "encode error %d",ret);
+            }
+            return;
+        } else if (ret < 0) {   // 产生了真正的编码错误
+            return;
+        }
+        LOGD(AUDIO_ENCODER_TAG, "packet size %d dts:%d pts:%d duration:%d",packet->size,packet->dts,packet->pts,packet->duration);
+        av_write_frame(fmtCtx, packet);
+        if (file) {
+            fwrite(packet->data, packet->size, 1, file);
+        }
+        // 每次编码avcodec_receive_packet都会重新为packet分配内存，所以这里用完之后要主动释放
+        av_packet_unref(packet);
+    }
+}
+
 
 
 void AudioEncoder::destroy() {
