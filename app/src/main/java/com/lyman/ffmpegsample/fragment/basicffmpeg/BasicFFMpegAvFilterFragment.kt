@@ -69,7 +69,7 @@ class BasicFFMpegAvFilterFragment : BaseFragment() {
 
             }
             DATA_TYPE.BASIC_FFMPEG_AVFILTER_YUV420P_ADD_FILTER -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("pic.yuv")
+                var bArrays: ByteArray? = readAssetsFileToByteArray("yuv420p.yuv")
                 var rootPath = File(AVFILTER_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()

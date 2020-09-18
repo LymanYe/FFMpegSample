@@ -32,7 +32,7 @@ class BasicFFMpegJNI {
     external fun encodePCMData2MP3(byteArray: ByteArray, saveRootPath: String, savePCMDir: String)
 
 
-    external fun encodeYUV420PData2H264(byteArray: ByteArray, saveRootPath: String, savePCMDir: String)
+    external fun encodeYUV420PData2H264(byteArray: ByteArray, saveRootPath: String, savePCMDir: String, width: Int, height: Int)
 
 
     external fun encodeYUV420PSingleData2H264(saveRootPath: String)

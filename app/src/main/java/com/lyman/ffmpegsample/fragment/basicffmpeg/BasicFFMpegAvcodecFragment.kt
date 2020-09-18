@@ -99,7 +99,7 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
                 }
             }
             DATA_TYPE.BASIC_FFMPEG_AVCODEC_ENCODE_YUV420P2H264 -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("pic.yuv")
+                var bArrays: ByteArray? = readAssetsFileToByteArray("yuv420p.yuv")
                 var rootPath = File(AVCODEC_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()
@@ -108,7 +108,7 @@ class BasicFFMpegAvcodecFragment : BaseFragment() {
                     h264Dir.mkdirs()
                 if(bArrays != null) {
                     Thread( Runnable {
-                        mBasicFFMpegJNI.encodeYUV420PData2H264(bArrays, AVCODEC_ROOT_PATH, h264Dir.absolutePath)
+                        mBasicFFMpegJNI.encodeYUV420PData2H264(bArrays, AVCODEC_ROOT_PATH, h264Dir.absolutePath, 500, 500)
                         activity?.runOnUiThread {
                             showToast("File save to $rootPath")
                         }

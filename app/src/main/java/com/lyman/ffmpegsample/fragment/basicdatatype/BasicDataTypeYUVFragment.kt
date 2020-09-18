@@ -40,7 +40,7 @@ class BasicDataTypeYUVFragment: BaseFragment() {
         var type = mRecyclerAdapter.getItem(position)
         when(type){
             DATA_TYPE.BASIC_DATA_YUV_SPLIT -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("pic.yuv")
+                var bArrays: ByteArray? = readAssetsFileToByteArray("yuv420p.yuv")
                 var rootPath = File(SPLIT_YUV_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()
@@ -50,7 +50,7 @@ class BasicDataTypeYUVFragment: BaseFragment() {
                 }
             }
             DATA_TYPE.BASIC_DATA_YUV_GRAY -> {
-                var bArrays: ByteArray? = readAssetsFileToByteArray("pic.yuv")
+                var bArrays: ByteArray? = readAssetsFileToByteArray("yuv420p.yuv")
                 var rootPath = File(SPLIT_YUV_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()

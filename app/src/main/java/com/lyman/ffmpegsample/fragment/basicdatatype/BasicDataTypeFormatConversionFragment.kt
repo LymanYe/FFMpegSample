@@ -41,7 +41,7 @@ class BasicDataTypeFormatConversionFragment: BaseFragment() {
                 var rootPath = File(FORMAT_CONVERSION_ROOT_PATH)
                 if(!rootPath.exists())
                     rootPath.mkdirs()
-                var saveFilePath = FORMAT_CONVERSION_ROOT_PATH + File.separator + "pic.yuv"
+                var saveFilePath = FORMAT_CONVERSION_ROOT_PATH + File.separator + "yuv420p.yuv"
                 if(bArrays != null) {
                     mBasicDataTypeJNI.convertRGB24ToYUV420P(bArrays, 500, 500, saveFilePath)
                     showToast("File save to $saveFilePath")

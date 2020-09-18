@@ -217,7 +217,7 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
 
 // encode yuv420p to h264
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encodeYUV420PData2H264
-        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath, jstring yuvDir) {
+        (JNIEnv *env, jobject js, jbyteArray byteArray, jstring rootOutputPath, jstring yuvDir, jint width, jint height) {
     jbyte *yuv_array = jbyteArray2cbyte(env, byteArray);
     unsigned char *yuv_buffer = (unsigned char *)yuv_array;
     int yuv_length = env->GetArrayLength(byteArray);
@@ -226,18 +226,19 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
     char h264_full_name[150];
     sprintf(h264_full_name, "%s%s", save_h264_dir, "/output.h264");
     // save file
-    FILE *input_h264_file;
-    char input_h264_file_path[120] = {0};
-    sprintf(input_h264_file_path, "%s%s", root_path, "/input.yuv");
-    if((input_h264_file = fopen(input_h264_file_path,"wb")) == NULL){
-        LOGE(TAG, "encodeYUV420PData2H264, failed to create output h264 file path");
+    FILE *input_yuv_file;
+    char input_yuv_file_path[120] = {0};
+    sprintf(input_yuv_file_path, "%s%s", root_path, "/input.yuv");
+    if((input_yuv_file = fopen(input_yuv_file_path,"wb")) == NULL){
+        LOGE(TAG, "encodeYUV420PData2H264, failed to create input yuv file path");
         return;
     }
-    fwrite(yuv_buffer, 1, yuv_length, input_h264_file);
-    fclose(input_h264_file);
+    int ret = fwrite(yuv_buffer, 1, yuv_length, input_yuv_file);
+    LOGD(TAG_FFMPEG, "encodeYUV420PData2H264, fwrite size = %d, path = %s", ret, input_yuv_file_path);
+    fclose(input_yuv_file);
 
-//    AudioEncoder *audioEncoder = new AudioEncoder(input_h264_file_path, h264_full_name, AV_CODEC_ID_AAC);
-//    audioEncoder->encodePCM2AAC();
+    VideoEncoder *videoEncoder = new VideoEncoder(input_yuv_file_path, h264_full_name, width, height, AV_CODEC_ID_H264);
+    videoEncoder->encodeYUV420PImage2H264();
 }
 
 
@@ -246,9 +247,9 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
         (JNIEnv *env, jobject js, jstring rootOutputPath) {
     char *root_path = jstring2cchar(env, rootOutputPath);
     char h264_full_path[150];
-    sprintf(h264_full_path, "%s%s", root_path, "/output.h264");
+    sprintf(h264_full_path, "%s%s", root_path, "/output_single_data.h264");
 
-    VideoEncoder *videoEncoder = new VideoEncoder(NULL, h264_full_path, AV_CODEC_ID_H264);
+    VideoEncoder *videoEncoder = new VideoEncoder(h264_full_path, AV_CODEC_ID_H264);
     videoEncoder->encodeGenerateYUV420P2H264();
 
 }
