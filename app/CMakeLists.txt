@@ -47,6 +47,7 @@ add_library(
         # Sets the library as a shared library.
         SHARED
         # Provides a relative path to your source file(s).
+        #${native_srcs}
         ${base}
         ${basicffmpegsrc})
 

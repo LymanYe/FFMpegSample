@@ -26,7 +26,7 @@ class BasicFFMpegFragment: BaseFragment() {
             //DATA_TYPE.BASIC_FFMPEG_AVDEVICE,/*Not implement*/
             DATA_TYPE.BASIC_FFMPEG_AVFILTER,
             DATA_TYPE.BASIC_FFMPEG_AVFORMAT,
-            DATA_TYPE.BASIC_FFMPEG_AVUTIL,
+            //DATA_TYPE.BASIC_FFMPEG_AVUTIL,
             DATA_TYPE.BASIC_FFMPEG_POSTPROC,
             DATA_TYPE.BASIC_FFMPEG_SWRESAMPLE,
             DATA_TYPE.BASIC_FFMPEG_SWSCALE
@@ -51,6 +51,12 @@ class BasicFFMpegFragment: BaseFragment() {
             }
             DATA_TYPE.BASIC_FFMPEG_AVFILTER-> {
                 showFragment(DATA_TYPE.BASIC_FFMPEG_AVFILTER)
+            }
+            DATA_TYPE.BASIC_FFMPEG_SWSCALE-> {
+                showFragment(DATA_TYPE.BASIC_FFMPEG_SWSCALE)
+            }
+            DATA_TYPE.BASIC_FFMPEG_SWRESAMPLE-> {
+                showFragment(DATA_TYPE.BASIC_FFMPEG_SWRESAMPLE)
             }
             else -> super.onItemClick(view, position)
         }

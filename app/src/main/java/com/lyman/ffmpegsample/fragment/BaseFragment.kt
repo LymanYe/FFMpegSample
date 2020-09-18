@@ -38,6 +38,7 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         BASIC_DATA_MP4("MP4封装格式解析"),
         BASIC_DATA_FORMAT_CONVERSION("格式转换"),
         BASIC_DATA_FORMAT_CONVERSION_RGB_TO_YUV("RGB24 转换为YUV420P"),
+
         BASIC_FFMPEG("FFMpeg基础"),
         BASIC_FFMPEG_INTEGRATED("FFMpeg集成"),
         BASIC_FFMPEG_AVCODEC("libavcodec示例"),
@@ -59,7 +60,9 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         BASIC_FFMPEG_AVUTIL("libavutil示例"),
         BASIC_FFMPEG_POSTPROC("libpostproc示例"),
         BASIC_FFMPEG_SWRESAMPLE("libswresample示例"),
+        BASIC_FFMPEG_SWRESAMPLE_PCM_DBL2S16("生成DBL PCM数据重采样为S16"),
         BASIC_FFMPEG_SWSCALE("libswscale示例"),
+        BASIC_FFMPEG_SWSCALE_GENERATE_YUV420P2RGB24("生成YUV420P图片转换为RGB24格式"),
         ENCODE("编码"),
         DECODER("解码")
     }

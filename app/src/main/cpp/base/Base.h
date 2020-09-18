@@ -16,6 +16,8 @@
 #define LOGV(tag, format, ...) __android_log_print(ANDROID_LOG_VERBOSE, tag, format, ##__VA_ARGS__)
 #define LOGW(tag, format, ...) __android_log_print(ANDROID_LOG_WARN, tag, format, ##__VA_ARGS__)
 
+//#define __STDC_CONSTANT_MACROS
+
 
 char* jstring2cchar(JNIEnv *env, jstring jStr);
 

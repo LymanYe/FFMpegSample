@@ -45,4 +45,10 @@ class BasicFFMpegJNI {
 
 
     external fun yuv420PAndFilter(byteArray: ByteArray, width: Int, height: Int, saveRootPath: String)
+
+
+    external fun swscaleGenerateYUV420P2RGB24(saveFilePath: String)
+
+
+    external fun resampleDBL2S16PCM(saveFilePath: String)
 }

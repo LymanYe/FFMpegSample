@@ -8,6 +8,8 @@
 #include "AudioFilter.h"
 #include "VideoFilter.h"
 #include "VideoEncoder.h"
+#include "SwScale.h"
+#include "Resample.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -385,6 +387,31 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_ope
 
     env->ReleaseStringUTFChars(yuvDir, save_yuv_dir);
 }
+
+
+// use libswscale convert yuv420p to rgb24
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_swscaleGenerateYUV420P2RGB24
+        (JNIEnv *env, jobject js, jstring rootOutputPath) {
+    char *root_path = jstring2cchar(env, rootOutputPath);
+
+    SwScale *swScale = new SwScale(root_path);
+    swScale->ConvertYUV420P2RGB();
+}
+
+
+// use libswresample convert dbl to s16 pcm
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_resampleDBL2S16PCM
+        (JNIEnv *env, jobject js, jstring rootOutputPath) {
+    char *root_path = jstring2cchar(env, rootOutputPath);
+
+    LOGD(TAG_FFMPEG, "resampleDBL2S16PCM, output file path = %s", root_path);
+
+    // todo 这里传参过去会乱码，所以固定写死。。。为啥呢
+    root_path = "storage/emulated/0/Android/data/com.lyman.ffmpegsample/files/Movies/BasicFFMpeg/SWSRESAMPLE/output_s16.pcm";
+    Resample * resample = new Resample(root_path);
+    resample->doResample();
+}
+
 
 #ifdef __cplusplus
 }

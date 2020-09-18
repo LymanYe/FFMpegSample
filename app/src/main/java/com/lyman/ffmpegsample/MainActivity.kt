@@ -7,10 +7,7 @@ import androidx.fragment.app.Fragment
 import com.lyman.ffmpegsample.fragment.BaseFragment
 import com.lyman.ffmpegsample.fragment.MainFragment
 import com.lyman.ffmpegsample.fragment.basicdatatype.*
-import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvFilterFragment
-import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvcodecFragment
-import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegAvdeviceFragment
-import com.lyman.ffmpegsample.fragment.basicffmpeg.BasicFFMpegFragment
+import com.lyman.ffmpegsample.fragment.basicffmpeg.*
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -60,6 +57,10 @@ class MainActivity : AppCompatActivity() {
                 BasicFFMpegAvcodecFragment()
             BaseFragment.DATA_TYPE.BASIC_FFMPEG_AVFILTER -> fragment =
                 BasicFFMpegAvFilterFragment()
+            BaseFragment.DATA_TYPE.BASIC_FFMPEG_SWSCALE -> fragment =
+                BasicFFMpegSwscaleFragment()
+            BaseFragment.DATA_TYPE.BASIC_FFMPEG_SWRESAMPLE -> fragment =
+                BasicFFMpegSwresampleFragment()
         }
         if(fragment != null)
             supportFragmentManager.beginTransaction().replace(R.id.content, fragment).addToBackStack(null).commit()
