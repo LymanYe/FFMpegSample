@@ -10,6 +10,7 @@
 #include "VideoEncoder.h"
 #include "SwScale.h"
 #include "Resample.h"
+#include "DeMuxing.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -406,11 +407,21 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_res
 
     LOGD(TAG_FFMPEG, "resampleDBL2S16PCM, output file path = %s", root_path);
 
-    // todo 这里传参过去会乱码，所以固定写死。。。为啥呢
-    root_path = "storage/emulated/0/Android/data/com.lyman.ffmpegsample/files/Movies/BasicFFMpeg/SWSRESAMPLE/output_s16.pcm";
     Resample * resample = new Resample(root_path);
     resample->doResample();
 }
+
+
+// h264+mp3 format mp4 demuxing, reference: https://blog.csdn.net/leixiaohua1020/article/details/39767055
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encapsulationFormatSampleDeMuxer
+        (JNIEnv *env, jobject js, jstring inputPath, jstring rootOutputPath) {
+    char *root_path = jstring2cchar(env, rootOutputPath);
+    char *input_path = jstring2cchar(env, inputPath);
+
+    DeMuxing *deMuxing = new DeMuxing(input_path, root_path);
+    deMuxing->demuxingSampleVideo();
+}
+
 
 
 #ifdef __cplusplus

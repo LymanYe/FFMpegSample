@@ -10,7 +10,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lyman.ffmpegsample.MainActivity
 import com.lyman.ffmpegsample.R
 import com.lyman.ffmpegsample.adapter.MyRecyclerViewAdapter
+import java.io.ByteArrayInputStream
+import java.io.FileOutputStream
 import java.io.InputStream
+import java.io.OutputStream
 
 open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
     var TAG: String = javaClass.simpleName
@@ -63,8 +66,8 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         BASIC_FFMPEG_SWRESAMPLE_PCM_DBL2S16("生成DBL PCM数据重采样为S16"),
         BASIC_FFMPEG_SWSCALE("libswscale示例"),
         BASIC_FFMPEG_SWSCALE_GENERATE_YUV420P2RGB24("生成YUV420P图片转换为RGB24格式"),
-        ENCODE("编码"),
-        DECODER("解码")
+        BASIC_FFMPELG_ENCAPSULATION_FORMAT("封装格式处理"),
+        BASIC_FFMPELG_ENCAPSULATION_FORMAT_SAMPLE_DEMUXER("MP4文件解封装输出视频H264音频MP3")
     }
 
 
@@ -107,8 +110,6 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
             DATA_TYPE.BASIC_FFMPEG -> {
                 showFragment(DATA_TYPE.BASIC_FFMPEG)
             }
-            DATA_TYPE.ENCODE -> {}
-            DATA_TYPE.DECODER -> {}
         }
         Toast.makeText(context, "clicked" + type.text , Toast.LENGTH_SHORT).show()
     }
@@ -126,6 +127,31 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         }
         return null
     }
+
+
+    fun writeByteArray2File(byteArray: ByteArray?, filePath: String) {
+        if(byteArray == null || byteArray.isEmpty())
+            return
+
+        try {
+            var outStream: OutputStream = FileOutputStream(filePath)
+            var inputStream: InputStream = ByteArrayInputStream(byteArray)
+
+            var len: Int
+            var buffer = ByteArray(1024)
+
+            while (((inputStream.read(buffer)).also { len = it }) != -1) {
+                outStream.write(buffer, 0, len)
+            }
+
+            inputStream.close()
+            outStream.close()
+        }catch (error: Throwable) {
+            error.printStackTrace()
+        }
+    }
+
+
 
 
     fun showToast(text: String) {

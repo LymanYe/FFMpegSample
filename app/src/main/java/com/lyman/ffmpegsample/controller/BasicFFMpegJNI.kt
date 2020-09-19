@@ -51,4 +51,7 @@ class BasicFFMpegJNI {
 
 
     external fun resampleDBL2S16PCM(saveFilePath: String)
+
+
+    external fun  encapsulationFormatSampleDeMuxer(inputFilepath: String, outputDir: String)
 }

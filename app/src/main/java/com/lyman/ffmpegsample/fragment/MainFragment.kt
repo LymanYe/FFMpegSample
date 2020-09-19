@@ -23,7 +23,7 @@ class MainFragment: BaseFragment(), MyRecyclerViewAdapter.ItemClickListener {
         savedInstanceState: Bundle?
     ): View? {
         var view: View = inflater.inflate(R.layout.fragment_main, container, false)
-        list = listOf(DATA_TYPE.BASIC_DATA, DATA_TYPE.BASIC_FFMPEG, DATA_TYPE.ENCODE, DATA_TYPE.DECODER)
+        list = listOf(DATA_TYPE.BASIC_DATA, DATA_TYPE.BASIC_FFMPEG)
         initView(view)
         return view
     }

@@ -61,6 +61,8 @@ class MainActivity : AppCompatActivity() {
                 BasicFFMpegSwscaleFragment()
             BaseFragment.DATA_TYPE.BASIC_FFMPEG_SWRESAMPLE -> fragment =
                 BasicFFMpegSwresampleFragment()
+            BaseFragment.DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT -> fragment =
+                BasicFFMpegEncapsulationFormatFragment()
         }
         if(fragment != null)
             supportFragmentManager.beginTransaction().replace(R.id.content, fragment).addToBackStack(null).commit()
