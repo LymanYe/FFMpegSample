@@ -21,19 +21,24 @@ extern "C" {
 
 class DeMuxing {
 private:
-    AVFormatContext *formatContext = NULL;
+    AVFormatContext *inputFormatContext = NULL, *outputFormatContextV = NULL, *outputFormatContextA;
     AVPacket pkt;
     int ret, i;
-    int videoindex=-1,audioindex=-1;
+    int videoindex = -1, audioindex = -1;
     const char *inputfilename;//Input file URL
     const char *outputfilename_v;//Output file URL
     const char *outputfilename_a;
     FILE *fp_audio, *fp_video;
+    AVOutputFormat *outputFormatA = NULL, *outputFormatV;
 
 public:
-    DeMuxing(char *inputfilepath, char *outputDir);
+    DeMuxing();
     virtual ~DeMuxing();
-    virtual void demuxingSampleVideo();
+    virtual void initDemuxingSample(char *inputfilepath, char *outputDir);
+    virtual void demuxingSample();
+
+    virtual void initDemuxing(char *inputfilepath, char *outputDir);
+    virtual void demuxing();
 };
 
 

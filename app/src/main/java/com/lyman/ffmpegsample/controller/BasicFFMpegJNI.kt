@@ -54,4 +54,7 @@ class BasicFFMpegJNI {
 
 
     external fun  encapsulationFormatSampleDeMuxer(inputFilepath: String, outputDir: String)
+
+
+    external fun  encapsulationFormatDeMuxer(inputFilepath: String, outputDir: String)
 }

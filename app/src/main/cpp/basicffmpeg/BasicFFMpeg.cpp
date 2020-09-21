@@ -418,8 +418,21 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
     char *root_path = jstring2cchar(env, rootOutputPath);
     char *input_path = jstring2cchar(env, inputPath);
 
-    DeMuxing *deMuxing = new DeMuxing(input_path, root_path);
-    deMuxing->demuxingSampleVideo();
+    DeMuxing *deMuxing = new DeMuxing();
+    deMuxing->initDemuxingSample(input_path, root_path);
+    deMuxing->demuxingSample();
+}
+
+
+// h264+mp3 format mp4 demuxing, reference: https://blog.csdn.net/leixiaohua1020/article/details/39802819
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encapsulationFormatDeMuxer
+        (JNIEnv *env, jobject js, jstring inputPath, jstring rootOutputPath) {
+    char *root_path = jstring2cchar(env, rootOutputPath);
+    char *input_path = jstring2cchar(env, inputPath);
+
+    DeMuxing *deMuxing = new DeMuxing();
+    deMuxing->initDemuxing(input_path, root_path);
+    deMuxing->demuxing();
 }
 
 

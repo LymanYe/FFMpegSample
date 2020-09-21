@@ -35,7 +35,8 @@ class BasicFFMpegEncapsulationFormatFragment : BaseFragment() {
     ): View? {
         var view: View = inflater.inflate(R.layout.fragment_basic_data_type, container, false)
         list = listOf(
-            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_SAMPLE_DEMUXER
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_SAMPLE_DEMUXER,
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_DEMUXER
         )
         initView(view)
         return view
@@ -57,6 +58,24 @@ class BasicFFMpegEncapsulationFormatFragment : BaseFragment() {
 
                 Thread( Runnable {
                     mBasicFFMpegJNI.encapsulationFormatSampleDeMuxer(inputFilePath, demuxuerDir.absolutePath)
+                    activity?.runOnUiThread {
+                        showToast("File save to ${demuxuerDir.absolutePath}")
+                    }
+
+                }).start()
+            }
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_DEMUXER -> {
+                var demuxuerDir = File(ENCAPSULATION_FORMAT_ROOT_PATH + File.separator + "demuxer")
+                if(!demuxuerDir.exists()){
+                    demuxuerDir.mkdirs()
+                }
+
+                var byteArray: ByteArray? = readAssetsFileToByteArray("h264_aac.mp4")
+                var inputFilePath = demuxuerDir.absolutePath + File.separator + "h264_aac.mp4"
+                writeByteArray2File(byteArray, inputFilePath)
+
+                Thread( Runnable {
+                    mBasicFFMpegJNI.encapsulationFormatDeMuxer(inputFilePath, demuxuerDir.absolutePath)
                     activity?.runOnUiThread {
                         showToast("File save to ${demuxuerDir.absolutePath}")
                     }
