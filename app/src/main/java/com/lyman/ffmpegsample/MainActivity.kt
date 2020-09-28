@@ -1,5 +1,9 @@
 package com.lyman.ffmpegsample
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -101,6 +105,10 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onPause")
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        Log.d(TAG, "onNewIntent")
+    }
 
     override fun onStart() {
         super.onStart()
@@ -118,4 +126,5 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         Log.d(TAG, "onDestroy")
     }
+
 }

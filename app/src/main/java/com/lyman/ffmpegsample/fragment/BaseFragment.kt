@@ -1,5 +1,6 @@
 package com.lyman.ffmpegsample.fragment
 
+import android.content.Intent
 import android.graphics.Rect
 import android.text.TextUtils
 import android.view.View
@@ -68,7 +69,8 @@ open class BaseFragment: Fragment(), MyRecyclerViewAdapter.ItemClickListener {
         BASIC_FFMPEG_SWSCALE_GENERATE_YUV420P2RGB24("生成YUV420P图片转换为RGB24格式"),
         BASIC_FFMPELG_ENCAPSULATION_FORMAT("封装格式处理"),
         BASIC_FFMPELG_ENCAPSULATION_FORMAT_SAMPLE_DEMUXER("MP4文件解封装输出视频H264音频MP3"),
-        BASIC_FFMPELG_ENCAPSULATION_FORMAT_DEMUXER("MP4文件解封装输出视频H264音频AAC")
+        BASIC_FFMPELG_ENCAPSULATION_FORMAT_DEMUXER("MP4文件解封装输出视频H264音频AAC"),
+        BASIC_FFMPELG_ENCAPSULATION_FORMAT_MUXER("视频H264音频AAC合并MP4文件输出"),
     }
 
 

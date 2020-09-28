@@ -11,6 +11,7 @@
 #include "SwScale.h"
 #include "Resample.h"
 #include "DeMuxing.h"
+#include "Muxing.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -424,7 +425,7 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
 }
 
 
-// h264+mp3 format mp4 demuxing, reference: https://blog.csdn.net/leixiaohua1020/article/details/39802819
+// h264+aac format mp4 demuxing, reference: https://blog.csdn.net/leixiaohua1020/article/details/39802819
 JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encapsulationFormatDeMuxer
         (JNIEnv *env, jobject js, jstring inputPath, jstring rootOutputPath) {
     char *root_path = jstring2cchar(env, rootOutputPath);
@@ -433,6 +434,24 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
     DeMuxing *deMuxing = new DeMuxing();
     deMuxing->initDemuxing(input_path, root_path);
     deMuxing->demuxing();
+}
+
+
+// h264 + acc to mp4, reference: https://blog.csdn.net/leixiaohua1020/article/details/39802913
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encapsulationFormatMuxer
+        (JNIEnv *env, jobject js, jstring inputPathVideo, jstring inputPathAudio, jstring outputPath) {
+    char *video_path = jstring2cchar(env, inputPathVideo);
+    char *audio_path = jstring2cchar(env, inputPathAudio);
+    char *output_path = jstring2cchar(env, outputPath);
+
+    LOGD(TAG_FFMPEG, "encapsulationFormatMuxer, "
+                     "input video path = %s; \n"
+                     "input audio path = %s; \n"
+                     "output path = %s", video_path, audio_path, output_path);
+
+    Muxing *muxing = new Muxing();
+    muxing->initMuxing(video_path, audio_path, output_path);
+    muxing->doMuxing();
 }
 
 

@@ -36,7 +36,8 @@ class BasicFFMpegEncapsulationFormatFragment : BaseFragment() {
         var view: View = inflater.inflate(R.layout.fragment_basic_data_type, container, false)
         list = listOf(
             DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_SAMPLE_DEMUXER,
-            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_DEMUXER
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_DEMUXER,
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_MUXER
         )
         initView(view)
         return view
@@ -78,6 +79,30 @@ class BasicFFMpegEncapsulationFormatFragment : BaseFragment() {
                     mBasicFFMpegJNI.encapsulationFormatDeMuxer(inputFilePath, demuxuerDir.absolutePath)
                     activity?.runOnUiThread {
                         showToast("File save to ${demuxuerDir.absolutePath}")
+                    }
+
+                }).start()
+            }
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_MUXER -> {
+                Thread( Runnable {
+                    var muxuerDir = File(ENCAPSULATION_FORMAT_ROOT_PATH + File.separator + "muxer")
+                    if(!muxuerDir.exists()){
+                        muxuerDir.mkdirs()
+                    }
+
+                    var byteArray: ByteArray? = readAssetsFileToByteArray("video_stream.h264")
+                    var inputVideoFilePath = muxuerDir.absolutePath + File.separator + "video_stream.h264"
+                    writeByteArray2File(byteArray, inputVideoFilePath)
+
+                    byteArray = readAssetsFileToByteArray("audio_stream.aac")
+                    var inputAudioFilePath = muxuerDir.absolutePath + File.separator + "audio_stream.aac"
+                    writeByteArray2File(byteArray, inputAudioFilePath)
+
+                    var outputFilePath = muxuerDir.absolutePath + File.separator + "output.mp4"
+
+                    mBasicFFMpegJNI.encapsulationFormatMuxer(inputVideoFilePath, inputAudioFilePath, outputFilePath)
+                    activity?.runOnUiThread {
+                        showToast("File save to $outputFilePath")
                     }
 
                 }).start()

@@ -193,6 +193,8 @@ void DeMuxing::initDemuxing(char *inputfilepath, char *outputDir) {
             LOGE(DEMUXING_TAG, "initDemuxing, Failed to copy codec context to out_stream codecpar context\n");
             return;
         }
+
+        avcodec_free_context(&codec_ctx);
     }
 
     //Dump Format------------------
@@ -271,7 +273,7 @@ void DeMuxing::demuxing() {
                 pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
                 pkt.duration = av_rescale_q(pkt.duration, in_stream->time_base, out_stream->time_base);
                 pkt.pos = -1;
-                pkt.stream_index=0;
+                pkt.stream_index = 0;
                 //Write
                 if (av_interleaved_write_frame(ofmt_ctx, &pkt) < 0) {
                     LOGE(DEMUXING_TAG, "demuxing, Error muxing packet\n");
