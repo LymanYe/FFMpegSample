@@ -60,4 +60,9 @@ class BasicFFMpegJNI {
 
 
     external fun  encapsulationFormatMuxer(inputVideoPath: String, inputAudioPath: String, outputPath: String)
+
+
+    external fun  encapsulationFormatReMuxer(inputVideoPath: String, outputPath: String)
+
+    external fun  encapsulationFormatEncodeAndMuxer(inputVideoPath: String)
 }

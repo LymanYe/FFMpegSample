@@ -37,7 +37,9 @@ class BasicFFMpegEncapsulationFormatFragment : BaseFragment() {
         list = listOf(
             DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_SAMPLE_DEMUXER,
             DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_DEMUXER,
-            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_MUXER
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_MUXER,
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_REMUXER,
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_ENCODE_AND_MUXER
         )
         initView(view)
         return view
@@ -104,7 +106,40 @@ class BasicFFMpegEncapsulationFormatFragment : BaseFragment() {
                     activity?.runOnUiThread {
                         showToast("File save to $outputFilePath")
                     }
+                }).start()
+            }
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_REMUXER -> {
+                Thread( Runnable {
+                    var muxuerDir = File(ENCAPSULATION_FORMAT_ROOT_PATH + File.separator + "muxer")
+                    if(!muxuerDir.exists()){
+                        muxuerDir.mkdirs()
+                    }
 
+                    var byteArray: ByteArray? = readAssetsFileToByteArray("output.mp4")
+                    var inputVideoFilePath = muxuerDir.absolutePath + File.separator + "remuxing_input.mp4"
+                    writeByteArray2File(byteArray, inputVideoFilePath)
+
+                    var outputFilePath = muxuerDir.absolutePath + File.separator + "remuxing_output.flv"
+
+                    mBasicFFMpegJNI.encapsulationFormatReMuxer(inputVideoFilePath, outputFilePath)
+                    activity?.runOnUiThread {
+                        showToast("File save to $outputFilePath")
+                    }
+                }).start()
+            }
+            DATA_TYPE.BASIC_FFMPELG_ENCAPSULATION_FORMAT_ENCODE_AND_MUXER -> {
+                Thread( Runnable {
+                    var muxuerDir = File(ENCAPSULATION_FORMAT_ROOT_PATH + File.separator + "muxer")
+                    if(!muxuerDir.exists()){
+                        muxuerDir.mkdirs()
+                    }
+
+                    var outputFilePath = muxuerDir.absolutePath + File.separator + "encode_muxing_output.mp4"
+
+                    mBasicFFMpegJNI.encapsulationFormatEncodeAndMuxer(outputFilePath)
+                    activity?.runOnUiThread {
+                        showToast("File save to $outputFilePath")
+                    }
                 }).start()
             }
             else -> super.onItemClick(view, position)

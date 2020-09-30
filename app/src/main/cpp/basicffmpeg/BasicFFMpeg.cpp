@@ -12,6 +12,7 @@
 #include "Resample.h"
 #include "DeMuxing.h"
 #include "Muxing.h"
+#include "EncodeMuxing.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -454,6 +455,26 @@ JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_enc
     muxing->doMuxing();
 }
 
+
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encapsulationFormatReMuxer
+        (JNIEnv *env, jobject js, jstring inputPathVideo, jstring outputPath) {
+    char *video_path = jstring2cchar(env, inputPathVideo);
+    char *output_path = jstring2cchar(env, outputPath);
+
+    Muxing *muxing = new Muxing();
+    muxing->initReMuxing(video_path, output_path);
+    muxing->doReMuxing();
+}
+
+
+JNIEXPORT void JNICALL Java_com_lyman_ffmpegsample_controller_BasicFFMpegJNI_encapsulationFormatEncodeAndMuxer
+        (JNIEnv *env, jobject js, jstring outputPath) {
+    char *output_path = jstring2cchar(env, outputPath);
+
+    EncodeMuxing *encodeMuxing = new EncodeMuxing();
+    encodeMuxing->init(output_path);
+    encodeMuxing->encodeAndMuxer();
+}
 
 
 #ifdef __cplusplus

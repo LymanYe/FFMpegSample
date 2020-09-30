@@ -13,12 +13,11 @@ extern "C" {
 #include "../ffmpeg/libavutil/avutil.h"
 #include "../ffmpeg/libavcodec/avcodec.h"
 #include "../ffmpeg/libavutil/timestamp.h"
+#include "../ffmpeg/libavutil/mathematics.h"
 };
 
 
 #define MUXING_TAG "Muxing"
-#define MUXING_USE_H264BSF 1
-#define MUXING_USE_AACBSF 0
 
 
 class Muxing {
@@ -31,10 +30,21 @@ private:
     AVStream *audio_in_stream = NULL,*video_in_stream = NULL;
     AVStream *audio_ou_stream = NULL,*video_ou_stream = NULL;
 
+    AVOutputFormat *ofmt = NULL;
+    AVFormatContext *ifmt_ctx = NULL, *ofmt_ctx = NULL;
+    AVPacket pkt;
+    const char *in_filename, *out_filename;
+    int i;
+    int stream_index = 0;
+    int *stream_mapping = NULL;
+    int stream_mapping_size = 0;
 public:
     Muxing();
     virtual void initMuxing(char *inputfilepath_v, char *inputfilepath_a, char *outputpath);
+    virtual void initReMuxing(char *inputfilepath, char *outputfilepath);
     virtual void doMuxing();
+    virtual void doReMuxing();
+    virtual void releaseReMuxingResource();
 };
 
 
